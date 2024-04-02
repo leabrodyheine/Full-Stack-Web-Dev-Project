@@ -1,23 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <title>CS 5003 P3</title>
 </head>
+
 <body>
     <h1>Social Running</h1>
-    <h2>Login</h2>
-<form id="loginForm" action="/api/users/login" method="get">
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required><br><br>
-    
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required><br><br>
-    
-    <input type="submit" value="Login">
-</form>
+    <div id="app">
+        <!-- Login Form -->
+        <div v-if="showSection === 'login'">
+            <h2>Login or Register</h2>
+            <form @submit.prevent="login">
+                <input v-model="username" placeholder="Username" required>
+                <input type="password" v-model="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <button @click="register">Register</button>
+        </div>
 
-<script src="Main.js"></script>
+        <!-- Event List -->
+        <div v-if="showSection === 'eventList'">
+            <h2>Event List</h2>
+            <!-- Render event list here -->
+            <button @click="showCreateRun">Create Run</button>
+        </div>
+
+        <!-- Create Run Form -->
+        <div v-if="showSection === 'createRun'">
+            <h2>Create Run</h2>
+            <form @submit.prevent="submitRun">
+                <input v-model="eventName" placeholder="Event Name" required>
+                <input type="date" v-model="eventDate" required>
+                <input type="time" v-model="startTime" required>
+                <input v-model="startLocation" placeholder="Start Location (e.g., Central Park, New York)" required>
+                <input v-model="endLocation" placeholder="End Location (e.g., Times Square, New York)" required>
+                <select v-model="runType" required>
+                    <option disabled value="">Please select one</option>
+                    <option>loop</option>
+                    <option>out and back</option>
+                    <option>point to point</option>
+                </select>
+                <!-- Include other fields as needed -->
+                <button type="submit">Submit Run</button>
+            </form>
+            <div id="map" style="height: 400px;"></div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="module" src="Main.js"></script>
 </body>
+
 </html>
