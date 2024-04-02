@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/Users.js');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const expressBasicAuth = require('express-basic-auth');
 
 // Custom authorizer function for express-basic-auth
