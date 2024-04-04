@@ -6,12 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="StyleSheet.css">
     <title>CS 5003 P3</title>
 </head>
 
 <body>
     <h1>Social Running</h1>
     <div id="app">
+        <div v-if="isLoggedIn" class="profile-icon" @click="toggleProfile">
+            &#128100;
+        </div>
         <!-- Login Form -->
         <div v-if="showSection === 'login'">
             <h2>Login or Register</h2>
@@ -24,12 +28,21 @@
         </div>
 
         <!-- Event List -->
-        <div v-if="showSection === 'eventList'">
+        <div v-if="showSection === 'eventList' && !showProfile" class="event-grid">
             <h2>Event List</h2>
-            <!-- Render event list here -->
-            <button @click="showCreateRun">Create Run</button>
+            <div class="grid-container">
+                <div v-for="run in runs" :key="run._id" class="run-card">
+                    <h3>{{ run.eventName }}</h3>
+                    <p>Date: {{ new Date(run.date).toLocaleDateString() }}</p>
+                    <p>Start Time: {{ run.startTime }}</p>
+                    <p>Start Location: {{ run.startLocation }}</p>
+                    <p>End Location: {{ run.endLocation }}</p>
+                    <p>Length: {{ run.length }}</p>
+                    <p>Type: {{ run.runType }}</p>
+                    <button @click="openSignUpModal(run)">Sign Up</button>
+                </div>
+            </div>
         </div>
-
         <!-- Create Run Form -->
         <div v-if="showSection === 'createRun'">
             <h2>Create Run</h2>
@@ -39,6 +52,7 @@
                 <input type="time" v-model="startTime" required>
                 <input v-model="startLocation" placeholder="Start Location (e.g., Central Park, New York)" required>
                 <input v-model="endLocation" placeholder="End Location (e.g., Times Square, New York)" required>
+                <input v-model="length" placeholder="Length (e.g., 3 miles)" required>
                 <select v-model="runType" required>
                     <option disabled value="">Please select one</option>
                     <option>loop</option>
@@ -48,10 +62,50 @@
                 <!-- Include other fields as needed -->
                 <button type="submit">Submit Run</button>
             </form>
-            <div id="map" style="height: 400px;"></div>
+            <!-- <div id="map" style="height: 400px;"></div> -->
+        </div>
+        <div v-if="showProfile">
+            <div style="margin-bottom: 20px;">
+                <button @click="backToRuns" class="back-to-runs-button">&#x2190; Back to Runs</button>
+            </div>
+            <button @click="currentTab = 'Signed Up Runs'">Signed Up Runs</button>
+            <button @click="currentTab = 'Completed Runs'">Completed Runs</button>
+            <button @click="currentTab = 'Stats'">Stats</button>
+
+            <div v-if="currentTab === 'Signed Up Runs'">
+                <div v-for="run in signedUpRuns" :key="run._id" class="run-card">
+                    <!-- Display details for each signed up run -->
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'Completed Runs'">
+                <!-- Display completed runs -->
+            </div>
+
+            <div v-if="currentTab === 'Stats'">
+                <!-- Display stats -->
+                <p>Total Miles Run: {{ stats.runningStats.distance }}</p>
+                <p>Total Time Run: {{ stats.runningStats.time }} minutes</p>
+                <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
+                <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
+            </div>
+        </div>
+        <!-- Sign Up Modal -->
+        <div v-if="showSignUpModal" class="modal">
+            <div class="modal-content">
+                <span class="close" @click="closeSignUpModal">&times;</span>
+                <h2>Sign Up for Run</h2>
+                <form @submit.prevent="submitSignUp">
+                    <label for="username">Your Username:</label>
+                    <input type="text" v-model="signUpUsername" required>
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
         </div>
     </div>
+    <!-- Vue.js library -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Your main JavaScript file -->
     <script type="module" src="Main.js"></script>
 </body>
 

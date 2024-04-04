@@ -6,7 +6,7 @@ const StatsSchema = new mongoose.Schema({
     distance: Number, // in miles
     time: Number, // in minutes 
     runs: Number, // number of runs
-    // Add more stats as needed
+    experience: String,
   }
 });
 

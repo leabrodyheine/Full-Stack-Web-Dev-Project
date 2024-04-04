@@ -1,4 +1,6 @@
 const fetch = require('node-fetch');
+const express = require('express');
+const router = express.Router();
 
 async function geocodeLocation(locationString) {
     const accessToken = 'pk.eyJ1IjoibGJoNSIsImEiOiJjbHU1bzBtc3IwdHljMmlueGc2aWQwamIxIn0.KFx5qzUkJz9ubiQ41wxYpg';
@@ -17,4 +19,4 @@ async function geocodeLocation(locationString) {
         return null;
     }
 }
-module.exports = { geocodeLocation };
+module.exports = router;

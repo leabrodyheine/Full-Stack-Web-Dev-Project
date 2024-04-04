@@ -36,8 +36,24 @@ const basicAuthMiddleware = expressBasicAuth({
 });
 
 // Login route using express-basic-auth
-router.get('/login', basicAuthMiddleware, (req, res) => {
-    res.status(200).json({ msg: `Welcome, ${req.auth.user}!` });
+router.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+
+        if (!user) {
+            return res.status(401).send('Login failed'); // User not found
+        }
+
+        if (password === user.password) {
+            res.status(200).json({ msg: `Welcome, ${username}!` });
+        } else {
+            return res.status(401).send('Login failed'); // Password does not match
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
 });
 
 
@@ -51,14 +67,10 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ msg: 'User already exists' });
     }
 
-    // Encrypt the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     // Create and store the new user
     user = new User({
         username,
-        password: hashedPassword
+        password
     });
 
     await user.save();
