@@ -20,6 +20,21 @@ const app = createApp({
             currentTab: 'Signed Up Runs',
             isLoggedIn: false,
             userId: null,
+            stats: {
+                runningStats: {
+                    distance: 0,
+                    time: 0,
+                    runs: 0
+                }
+            },
+            imagePaths: [
+                'images/steven-lelham-atSaEOeE8Nk-unsplash.jpg',
+                'images/fabio-comparelli-uq2E2V4LhCY-unsplash.jpg',
+                'images/jenny-hill-mQVWb7kUoOE-unsplash.jpg',
+                'images/jeremy-lapak-CVvFVQ_-oUg-unsplash.jpg',
+                'images/joshua-earle-Lfxav1eVM4Y-unsplash.jpg',
+                'images/miguel-a-amutio-Y0woUmyxGrw-unsplash.jpg'
+            ],
         };
     },
     mounted() {
@@ -47,6 +62,7 @@ const app = createApp({
 
         async fetchSignedUpRuns() {
             try {
+                console.log("user id:" + this.userId)
                 const response = await fetch(`/api/runs/signed-up/${this.userId}`);
                 if (response.ok) {
                     const signedUpRuns = await response.json();
@@ -72,12 +88,14 @@ const app = createApp({
                     body: JSON.stringify({ username: this.username, password: this.password }),
                 });
                 if (response.ok) {
+                    const userData = await response.json();
                     this.username = '';
                     this.password = '';
                     this.isLoggedIn = true;
-                    const userData = await response.json();
-                    this.userId = userData._id;
-                    this.fetchRuns().then(() => this.fetchSignedUpRuns());
+                    this.userId = userData.userId;
+                    console.log(`Logged in user ID: ${this.userId}`);
+                    await this.fetchRuns();
+                    await this.fetchSignedUpRuns(); // Ensure this is awaited
                     this.showSection = 'eventList';
                 } else {
                     alert('Login failed!');
@@ -101,7 +119,7 @@ const app = createApp({
                     this.password = '';
                     this.isLoggedIn = true;
                     const userData = await response.json();
-                    this.userId = userData._id;
+                    this.userId = userData.userId;
                     this.fetchRuns().then(() => this.fetchSignedUpRuns());
                     this.showSection = 'eventList';
                 } else {
@@ -124,10 +142,9 @@ const app = createApp({
         },
         toggleProfile() {
             this.showProfile = !this.showProfile;
+            this.showSection = this.showProfile ? '' : 'eventList';
             if (this.showProfile) {
-                this.showSection = '';
-            } else {
-                this.showSection = 'eventList';
+                this.currentTab = 'Signed Up Runs';
             }
         },
         closeSignUpModal() {
@@ -187,6 +204,9 @@ const app = createApp({
                 console.error('Error signing up for run:', error);
             }
         },
+        calculateExperienceLevel(distance) {
+            // logic here later
+        }
     },
     computed: {
         signedUpRuns() {

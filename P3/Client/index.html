@@ -13,14 +13,28 @@
 </head>
 
 <body>
-    <h1>Social Running</h1>
     <div id="app">
-        <div v-if="isLoggedIn" class="profile-icon" @click="toggleProfile">
-            &#128100;
+        <!-- Navigation Bar -->
+        <div v-if="isLoggedIn" class="nav-wrapper">
+            <ul class="nav nav-tabs justify-content-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" :class="{ active: showSection === 'eventList' }"
+                        @click.prevent="showSection = 'eventList'">Runs List</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" :class="{ active: showSection === 'createRun' }"
+                        @click.prevent="showSection = 'createRun'">Create New Run</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" :class="{ active: showSection === 'profile' }"
+                        @click.prevent="toggleProfile">Profile</a>
+                </li>
+            </ul>
         </div>
+        <h1>Social Running</h1>
         <!-- Login Form -->
         <div v-if="showSection === 'login'" class="container">
-            <div class="row justify-content-center align-items-center" style="min-height: 100vh;">
+            <div class="row justify-content-center align-items-center" style="min-height: 60vh;">
                 <h2 class="text-center mb-4">Login or Register</h2>
                 <div class="col-12 col-md-6 col-lg-4">
                     <form @submit.prevent="login">
@@ -45,117 +59,122 @@
         <div v-if="showSection === 'eventList' && !showProfile" class="event-grid">
             <h2>Event List</h2>
             <div class="grid-container">
-                <CCard v-for="run in runs" :key="run._id" class="run-card" style="width: 17rem">
-                    <CCardImage orientation="top" src="/P3/Client/images/steven-lelham-atSaEOeE8Nk-unsplash.jpg" />
-                    <CCardBody>
-                        <CCardTitle>{{ run.eventName }}</CCardTitle>
-                        <CCardText>
-                            <p>Date: {{ new Date(run.date).toLocaleDateString() }}</p>
-                            <p>Start Time: {{ run.startTime }}</p>
-                            <p>Start Location: {{ run.startLocation }}</p>
-                            <p>End Location: {{ run.endLocation }}</p>
-                            <p>Length: {{ run.length }}</p>
-                            <p>Type: {{ run.runType }}</p>
-                        </CCardText>
-                        <button @click="openSignUpModal(run)">Sign Up</button>
-                    </CCardBody>
-                </CCard>
+                <div v-for="(run, index) in runs" :key="run._id" class="run-card" style="width: 17rem;">
+                    <img :src="imagePaths[index % imagePaths.length]" class="card-img-top" alt="Run Image">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ run.eventName }}</h5>
+                        <p class="card-text">Date: {{ new Date(run.date).toLocaleDateString() }}</p>
+                        <p class="card-text">Start Time: {{ run.startTime }}</p>
+                        <p class="card-text">Start Location: {{ run.startLocation }}</p>
+                        <p class="card-text">End Location: {{ run.endLocation }}</p>
+                        <p class="card-text">Length: {{ run.length }}</p>
+                        <p class="card-text">Type: {{ run.runType }}</p>
+                        <button @click="openSignUpModal(run)" class="btn btn-primary">Sign Up</button>
+                    </div>
+                </div>
             </div>
         </div>
+
+
         <!-- Create Run Form -->
         <div v-if="showSection === 'createRun'">
             <h2>Create Run</h2>
             <form @submit.prevent="submitRun">
-
                 <!-- Run Name -->
-                <CForm>
-                    <CFormInput type="string" id="event-name" label="Event Name" placeholder="Saturday Afternoon Run" />
-                </CForm>
+                <div class="mb-3">
+                    <label for="event-name" class="form-label">Event Name</label>
+                    <input type="text" class="form-control" id="event-name" v-model="eventName"
+                        placeholder="Saturday Afternoon Run" required>
+                </div>
 
                 <!-- Date -->
-                <div class="row">
-                    <div class="col-lg-4">
-                        <CDatePicker label="Date" locale="en-US" />
-                    </div>
-                    <div class="col-lg-4">
-                        <CDatePicker date="2022/2/16" label="Date" locale="en-US" />
-                    </div>
+                <div class="mb-3">
+                    <label for="event-date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="event-date" v-model="eventDate" required>
                 </div>
 
-                <!-- start time -->
-                <input type="time" v-model="startTime" required>
+                <!-- Start Time -->
+                <div class="mb-3">
+                    <label for="start-time" class="form-label">Start Time</label>
+                    <input type="time" class="form-control" id="start-time" v-model="startTime" required>
+                </div>
 
-                <!-- start location -->
-                <CForm>
-                    <CFormInput v-model="startLocation" type="string" id="startLocation" label="Starting Location"
-                        placeholder="e.g., Central Park, New Yorkk" required />
-                </CForm>
+                <!-- Start Location -->
+                <div class="mb-3">
+                    <label for="start-location" class="form-label">Starting Location</label>
+                    <input type="text" class="form-control" id="start-location" v-model="startLocation"
+                        placeholder="e.g., Central Park, New York" required>
+                </div>
 
-                <!-- end location -->
-                <CForm>
-                    <CFormInput v-model="endLocation" type="string" id="endLocation" label="Ending Location"
-                        placeholder="e.g., Central Park, New York" required />
-                </CForm>
+                <!-- End Location -->
+                <div class="mb-3">
+                    <label for="end-location" class="form-label">Ending Location</label>
+                    <input type="text" class="form-control" id="end-location" v-model="endLocation"
+                        placeholder="e.g., Central Park, New York" required>
+                </div>
 
-                <!-- run length in miles -->
-                <CForm>
-                    <CFormInput v-model="length" type="int" id="length" label="Miles" placeholder="e.g., 3" required />
-                </CForm>
+                <!-- Run Length in Miles -->
+                <div class="mb-3">
+                    <label for="run-length" class="form-label">Miles</label>
+                    <input type="number" class="form-control" id="run-length" v-model="length" placeholder="e.g., 3"
+                        required>
+                </div>
 
-                <!-- run type -->
-                <CFormFloating>
-                    <CFormSelect v-model="runType" required id="run-type" floatingLabel="Works with selects"
-                        aria-label="Run Type">
-                        <option value="loop">loop</option>
+                <!-- Run Type -->
+                <div class="mb-3">
+                    <label for="run-type" class="form-label">Run Type</label>
+                    <select class="form-select" id="run-type" v-model="runType" required>
+                        <option value="loop">Loop</option>
                         <option value="Out and Back">Out and Back</option>
                         <option value="Point to Point">Point to Point</option>
-                    </CFormSelect>
-                </CFormFloating>
-                <!-- Include other fields as needed -->
-                <button type="submit">Submit Run</button>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Submit Run</button>
+                </div>
             </form>
         </div>
-        <template>
-            <div v-if="showProfile">
-                <div style="margin-bottom: 20px;">
-                    <button @click="backToRuns" class="back-to-runs-button">&#x2190; Back to Runs</button>
-                </div>
-                <b-nav variant="underline-border">
-                    <b-nav-item>
-                        <b-nav-link href="#" @click="currentTab = 'Signed Up Runs'"
-                            :active="currentTab === 'Signed Up Runs'">
-                            Signed Up Runs
-                        </b-nav-link>
-                    </b-nav-item>
-                    <b-nav-item>
-                        <b-nav-link href="#" @click="currentTab = 'Completed Runs'"
-                            :active="currentTab === 'Completed Runs'">
-                            Completed Runs
-                        </b-nav-link>
-                    </b-nav-item>
-                    <b-nav-item>
-                        <b-nav-link href="#" @click="currentTab = 'Stats'" :active="currentTab === 'Stats'">
-                            Stats
-                        </b-nav-link>
-                    </b-nav-item>
-                </b-nav>
-                <div v-if="currentTab === 'Signed Up Runs'">
-                    <div v-for="run in signedUpRuns" :key="run._id" class="run-card">
-                        <!-- Display details for each signed up run -->
-                    </div>
-                </div>
 
-                <div v-if="currentTab === 'Completed Runs'">
-                    <!-- Display completed runs -->
-                </div>
+        <!-- profile -->
+        <template v-if="showProfile">
+            <div style="margin-bottom: 20px;">
+                <button @click="backToRuns" class="back-to-runs-button">&#x2190; Back to Runs</button>
+            </div>
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link" :class="{ active: currentTab === 'Signed Up Runs' }"
+                        @click.prevent="currentTab = 'Signed Up Runs'">Signed Up Runs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" :class="{ active: currentTab === 'Completed Runs' }"
+                        @click.prevent="currentTab = 'Completed Runs'">Completed Runs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" :class="{ active: currentTab === 'Stats' }"
+                        @click.prevent="currentTab = 'Stats'">Stats</a>
+                </li>
+            </ul>
 
-                <div v-if="currentTab === 'Stats'">
-                    <!-- Display stats -->
-                    <p>Total Miles Run: {{ stats.runningStats.distance }}</p>
-                    <p>Total Time Run: {{ stats.runningStats.time }} minutes</p>
-                    <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
-                    <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
+            <div v-if="currentTab === 'Signed Up Runs'">
+                <!-- Display details for each signed up run -->
+                <!-- Iterate over signedUpRuns computed property -->
+                <div v-for="run in signedUpRuns" :key="run._id" class="run-card">
+                    <!-- Run details here -->
                 </div>
+            </div>
+
+            <div v-if="currentTab === 'Completed Runs'">
+                <!-- Display details for completed runs -->
+            </div>
+
+            <div v-if="currentTab === 'Stats'">
+                <!-- Display user stats -->
+                <p>Total Miles Run: {{ stats.runningStats.distance }}</p>
+                <p>Total Time Run: {{ stats.runningStats.time }} minutes</p>
+                <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
+                <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
             </div>
         </template>
         <!-- Sign Up Modal -->

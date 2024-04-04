@@ -6,7 +6,6 @@ const { geocodeLocation } = require('../GeoCoding.js');
 
 
 
-
 router.get('/', async (req, res) => {
   try {
     const runs = await Run.find(); // Fetch all runs
@@ -75,6 +74,17 @@ router.put('/signup/:runId', async (req, res) => {
   }
 });
 
+// Fetch runs signed up by a specific user
+router.get('/signed-up/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const signedUpRuns = await Run.find({ 'signUps': userId });
+    res.json(signedUpRuns);
+  } catch (error) {
+    console.error('Error fetching signed-up runs:', error);
+    res.status(500).send('Error fetching signed-up runs');
+  }
+});
 
 router.get('/importGPX', async (req, res) => {
   try {

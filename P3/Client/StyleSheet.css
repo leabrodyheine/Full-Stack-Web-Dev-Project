@@ -9,10 +9,32 @@ head {
 
 h1 {
     text-align: center;
+    padding-top: 30px;
 }
 
 h2 {
     text-align: center;
+}
+
+.nav-tabs {
+    background-color: #566f8b;
+    border-bottom: 2px solid #333;
+}
+
+.nav-wrapper {
+    background-color: #f8f9fa;
+    border-bottom: 1pxrgb(233, 244, 255)#dee2e6;
+}
+
+.nav-link {
+    color: #f8f9fa;
+}
+
+.nav-link.active {
+    background-color: #fff;
+    color: #333;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom: 2px solid #007bff;
 }
 
 /* profile */
@@ -40,10 +62,10 @@ h2 {
 }
 
 
-
 /* log in/register */
-#username, #password {
-    width: 100%; 
+#username,
+#password {
+    width: 100%;
     margin: auto;
 }
 
@@ -53,6 +75,13 @@ h2 {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     padding: 20px;
+}
+
+.card-img-top {
+    width: 100%; /* ensures the image spans the full width of the card */
+    height: 160px; /* fixed height for all images */
+    object-fit: cover; /* cover the container while maintaining aspect ratio */
+    object-position: center; /* center the image within the element */
 }
 
 .run-card {
