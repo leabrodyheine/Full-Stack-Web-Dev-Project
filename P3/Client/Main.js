@@ -19,6 +19,7 @@ const app = createApp({
             showProfile: false,
             currentTab: 'Signed Up Runs',
             isLoggedIn: false,
+            userId: null,
         };
     },
     mounted() {
@@ -29,8 +30,12 @@ const app = createApp({
             try {
                 const response = await fetch('/api/runs');
                 if (response.ok) {
-                    const runsData = await response.json();
+                    let runsData = await response.json();
                     console.log("Runs fetched: ", runsData);
+                    runsData = runsData.map(run => ({
+                        ...run,
+                        isUserSignedUp: run.signUps.includes(this.userId) // Assuming you have userId stored
+                    }));
                     this.runs = runsData;
                 } else {
                     console.error('Failed to fetch runs');
@@ -39,6 +44,23 @@ const app = createApp({
                 console.error('Error fetching runs:', error);
             }
         },
+
+        async fetchSignedUpRuns() {
+            try {
+                const response = await fetch(`/api/runs/signed-up/${this.userId}`);
+                if (response.ok) {
+                    const signedUpRuns = await response.json();
+                    this.runs.forEach(run => {
+                        run.isUserSignedUp = signedUpRuns.some(signedUpRun => signedUpRun._id === run._id);
+                    });
+                } else {
+                    console.error('Failed to fetch signed-up runs');
+                }
+            } catch (error) {
+                console.error('Error fetching signed-up runs:', error);
+            }
+        },
+
 
         async login() {
             try {
@@ -53,7 +75,9 @@ const app = createApp({
                     this.username = '';
                     this.password = '';
                     this.isLoggedIn = true;
-                    this.fetchRuns();
+                    const userData = await response.json();
+                    this.userId = userData._id;
+                    this.fetchRuns().then(() => this.fetchSignedUpRuns());
                     this.showSection = 'eventList';
                 } else {
                     alert('Login failed!');
@@ -62,6 +86,7 @@ const app = createApp({
                 console.error('Error:', error);
             }
         },
+
         async register() {
             try {
                 const response = await fetch('/api/users/register', {
@@ -75,7 +100,9 @@ const app = createApp({
                     this.username = '';
                     this.password = '';
                     this.isLoggedIn = true;
-                    this.fetchRuns();
+                    const userData = await response.json();
+                    this.userId = userData._id;
+                    this.fetchRuns().then(() => this.fetchSignedUpRuns());
                     this.showSection = 'eventList';
                 } else {
                     alert('Registration failed!');
@@ -161,4 +188,9 @@ const app = createApp({
             }
         },
     },
+    computed: {
+        signedUpRuns() {
+            return this.runs.filter(run => run.isUserSignedUp);
+        }
+    }
 }).mount('#app');

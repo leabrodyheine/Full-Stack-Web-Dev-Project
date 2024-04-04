@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
         }
 
         if (password === user.password) {
-            res.status(200).json({ msg: `Welcome, ${username}!` });
+            res.status(200).json({ msg: `Welcome, ${username}!`, userId: user._id });
         } else {
             return res.status(401).send('Login failed'); // Password does not match
         }
@@ -75,7 +75,7 @@ router.post('/register', async (req, res) => {
 
     await user.save();
     console.log(user)
-    res.status(201).json({ msg: 'User registered successfully' });
+    res.status(200).json({ msg: `Welcome, ${username}!`, userId: user._id });
 });
 
 
@@ -90,6 +90,20 @@ router.get('/', async (req, res) => {
         res.status(500).send('Error Getting Users');
     }
 });
+
+
+// Fetch runs signed up by a specific user
+router.get('/signed-up/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const signedUpRuns = await Run.find({ 'signUps': userId });
+        res.json(signedUpRuns);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error fetching signed up runs');
+    }
+});
+
 
 // GET api/users/:id - Get a single user by ID
 router.get('/:id', async (req, res) => {

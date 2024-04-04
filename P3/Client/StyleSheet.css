@@ -42,30 +42,28 @@ h2 {
 
 
 /* log in/register */
-.login {
-    align-items: center;
-    justify-content: center;
+#username, #password {
+    width: 100%; 
+    margin: auto;
 }
 
 /* run cards */
 .grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    /* Creates a responsive grid layout */
     gap: 20px;
-    /* Space between grid items */
     padding: 20px;
-    /* Padding around the grid */
 }
 
 .run-card {
     border: 1px solid #ddd;
-    background-color: #e7e7e7;
+    background-color: #ffffff;
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s;
+    height: auto;
 }
 
 .run-card:hover {
@@ -84,11 +82,11 @@ h2 {
 }
 
 .run-card button {
-    background-color: #007bff;
+    background-color: #afbef3;
     color: white;
     border: none;
     border-radius: 5px;
-    padding: 10px 20px;
+    padding: 5px 10px;
     border-radius: 5px;
     cursor: pointer;
 }
