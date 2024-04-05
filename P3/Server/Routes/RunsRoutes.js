@@ -3,6 +3,7 @@ const router = express.Router();
 const { parseGPX } = require('../GxpParser.js');
 const Run = require('../models/Run');
 const { geocodeLocation } = require('../GeoCoding.js');
+const mongoose = require('mongoose');
 
 
 
@@ -31,7 +32,7 @@ router.post('/api/geocode', async (req, res) => {
 // POST endpoint for creating a new run
 router.post('/create', async (req, res) => {
   try {
-    const { stops, length, totalTime, date, startTime, startLocation, endLocation, runType } = req.body;
+    const { stops, length, totalTime, date, startTime, startLocation, endLocation, runType, runPace } = req.body;
     const newRun = new Run({
       stops,
       length,
@@ -41,6 +42,7 @@ router.post('/create', async (req, res) => {
       startLocation,
       endLocation,
       runType,
+      runPace,
     });
 
     await newRun.save();
@@ -66,7 +68,6 @@ router.put('/signup/:runId', async (req, res) => {
       run.signUps.push(userId);
       await run.save();
     }
-
     res.status(200).json(run);
   } catch (error) {
     console.error(error);
@@ -78,13 +79,46 @@ router.put('/signup/:runId', async (req, res) => {
 router.get('/signed-up/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const signedUpRuns = await Run.find({ 'signUps': userId });
-    res.json(signedUpRuns);
+    // Convert string to ObjectId for MongoDB
+    const objectIdUserId = mongoose.Types.ObjectId(userId);
+    const signedUpRuns = await Run.find({ 'signUps': objectIdUserId });
+
+    if (signedUpRuns) {
+      res.json(signedUpRuns);
+    } else {
+      res.status(404).json({ msg: `No runs found for user ${userId}` });
+    }
   } catch (error) {
     console.error('Error fetching signed-up runs:', error);
     res.status(500).send('Error fetching signed-up runs');
   }
 });
+
+router.post('/complete/:runId', async (req, res) => {
+  const { runId } = req.params;
+  const { userId, time, distance, pace } = req.body;
+
+  try {
+    const run = await Run.findById(runId);
+    if (!run) {
+      return res.status(404).send('Run not found');
+    }
+
+    const completionDetails = { userId, time, distance, pace, date: new Date() };
+    run.completedBy.push(completionDetails);
+
+    await run.save();
+
+    // Modify the response to send back the updated run with the completion details
+    const updatedRun = await Run.findById(runId).populate('completedBy.userId');
+    res.json(updatedRun);
+  } catch (error) {
+    console.error('Error marking run as completed:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+
 
 router.get('/importGPX', async (req, res) => {
   try {

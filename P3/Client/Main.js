@@ -16,6 +16,8 @@ const app = createApp({
             startLocation: '',
             endLocation: '',
             runType: '',
+            runPace: '',
+            runLength: '',
             showProfile: false,
             currentTab: 'Signed Up Runs',
             isLoggedIn: false,
@@ -35,6 +37,9 @@ const app = createApp({
                 'images/joshua-earle-Lfxav1eVM4Y-unsplash.jpg',
                 'images/miguel-a-amutio-Y0woUmyxGrw-unsplash.jpg'
             ],
+            showCompletionModal: false,
+            completionDetails: { time: 0, distance: 0, pace: 0 },
+            selectedRunForCompletion: null,
         };
     },
     mounted() {
@@ -46,10 +51,10 @@ const app = createApp({
                 const response = await fetch('/api/runs');
                 if (response.ok) {
                     let runsData = await response.json();
-                    console.log("Runs fetched: ", runsData);
                     runsData = runsData.map(run => ({
                         ...run,
-                        isUserSignedUp: run.signUps.includes(this.userId) // Assuming you have userId stored
+                        imagePath: this.getRunImage(), // Assign a persistent image 
+                        isUserSignedUp: run.signUps.includes(this.userId),
                     }));
                     this.runs = runsData;
                 } else {
@@ -62,7 +67,6 @@ const app = createApp({
 
         async fetchSignedUpRuns() {
             try {
-                console.log("user id:" + this.userId)
                 const response = await fetch(`/api/runs/signed-up/${this.userId}`);
                 if (response.ok) {
                     const signedUpRuns = await response.json();
@@ -93,9 +97,8 @@ const app = createApp({
                     this.password = '';
                     this.isLoggedIn = true;
                     this.userId = userData.userId;
-                    console.log(`Logged in user ID: ${this.userId}`);
                     await this.fetchRuns();
-                    await this.fetchSignedUpRuns(); // Ensure this is awaited
+                    await this.fetchSignedUpRuns();
                     this.showSection = 'eventList';
                 } else {
                     alert('Login failed!');
@@ -120,7 +123,8 @@ const app = createApp({
                     this.isLoggedIn = true;
                     const userData = await response.json();
                     this.userId = userData.userId;
-                    this.fetchRuns().then(() => this.fetchSignedUpRuns());
+                    await this.fetchRuns();
+                    await this.fetchSignedUpRuns();
                     this.showSection = 'eventList';
                 } else {
                     alert('Registration failed!');
@@ -164,6 +168,7 @@ const app = createApp({
                     runType: this.runType,
                     startLocation: this.startLocation,
                     endLocation: this.endLocation,
+                    runPace: this.runPace
                 };
                 const response = await fetch('/api/runs/create', {
                     method: 'POST',
@@ -191,12 +196,13 @@ const app = createApp({
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ username: this.signUpUsername }),
+                    body: JSON.stringify({ userId: this.userId }),
                 });
                 if (response.ok) {
                     alert('Signed up successfully!');
                     this.showSignUpModal = false;
                     this.fetchRuns();
+                    await this.fetchSignedUpRuns();
                 } else {
                     alert('Failed to sign up for the run');
                 }
@@ -206,11 +212,75 @@ const app = createApp({
         },
         calculateExperienceLevel(distance) {
             // logic here later
-        }
+        },
+        getRunImage() {
+            const index = Math.floor(Math.random() * this.imagePaths.length);
+            return this.imagePaths[index];
+        },
+
+        async markRunAsCompleted() {
+            try {
+                const response = await fetch(`/api/runs/complete/${this.selectedRunForCompletion._id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: this.userId,
+                        time: this.completionDetails.time,
+                        distance: this.completionDetails.distance,
+                        pace: this.completionDetails.pace,
+                    }),
+                });
+                if (response.ok) {
+                    // Immediately reflect changes in UI without refetching
+                    const updatedRun = await response.json();
+                    const runIndex = this.runs.findIndex(run => run._id === this.selectedRunForCompletion._id);
+                    if (runIndex !== -1) {
+                        this.runs.splice(runIndex, 1, updatedRun); // Replace the run with its updated version
+                    }
+                    this.showCompletionModal = false;
+                    console.log('Run marked as completed successfully!');
+                } else {
+                    console.error('Failed to mark run as completed');
+                }
+            } catch (error) {
+                console.error('Error marking run as completed:', error);
+            }
+        },
+
+
+        openCompletionModal(run) {
+            console.log("Opening completion modal for run:", run);
+            this.selectedRunForCompletion = run;
+            const calculatedTime = run.runPace && run.runLength ? run.runPace * run.runLength : 0;
+            this.completionDetails = {
+                time: run.time || calculatedTime,
+                distance: run.runLength,
+                pace: run.runPace,
+            };
+            this.showCompletionModal = true;
+            console.log("showCompletionModal set to true");
+        },
+
+
     },
     computed: {
         signedUpRuns() {
-            return this.runs.filter(run => run.isUserSignedUp);
+            // Filter runs where the user is signed up and not yet completed
+            return this.runs.filter(run => run.signUps.includes(this.userId) && !run.completedBy.find(completion => completion.userId === this.userId));
+        },
+        completedRuns() {
+            // Filter runs where the user has completed them
+            return this.runs
+                .filter(run => run.completedBy.some(completion => completion.userId === this.userId))
+                .map(run => {
+                    const userCompletion = run.completedBy.find(completion => completion.userId === this.userId);
+                    return {
+                        ...run,
+                        userCompletion,
+                    };
+                });
         }
     }
 }).mount('#app');

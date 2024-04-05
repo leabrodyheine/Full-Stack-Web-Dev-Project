@@ -9,11 +9,18 @@ const RunSchema = new mongoose.Schema({
   startTime: { type: String, required: true },
   startLocation: { type: String, required: true },
   endLocation: { type: String, required: true },
+  pace: Number, //average mile pace
   runType: {
     type: String,
     enum: ['loop', 'out and back', 'point to point'],
     required: true,
   },
+  completedBy: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    time: Number, // in minutes
+    date: Date,
+    pace: Number, // min per mile
+  }],
 });
 
 module.exports = mongoose.model('Run', RunSchema);

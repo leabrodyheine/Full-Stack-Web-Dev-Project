@@ -68,6 +68,7 @@
                         <p class="card-text">Start Location: {{ run.startLocation }}</p>
                         <p class="card-text">End Location: {{ run.endLocation }}</p>
                         <p class="card-text">Length: {{ run.length }}</p>
+                        <p class="card-text">Pace: {{ run.runPace }} per mile</p>
                         <p class="card-text">Type: {{ run.runType }}</p>
                         <button @click="openSignUpModal(run)" class="btn btn-primary">Sign Up</button>
                     </div>
@@ -120,6 +121,13 @@
                         required>
                 </div>
 
+                <!-- Pace -->
+                <div class="mb-3">
+                    <label for="run-pace" class="form-label">Average Mins Per Mile</label>
+                    <input type="number" class="form-control" id="run-pace" v-model="pace" placeholder="e.g., 3"
+                        required>
+                </div>
+
                 <!-- Run Type -->
                 <div class="mb-3">
                     <label for="run-type" class="form-label">Run Type</label>
@@ -158,25 +166,63 @@
             </ul>
 
             <div v-if="currentTab === 'Signed Up Runs'">
-                <!-- Display details for each signed up run -->
-                <!-- Iterate over signedUpRuns computed property -->
-                <div v-for="run in signedUpRuns" :key="run._id" class="run-card">
-                    <!-- Run details here -->
+                <div class="grid-container">
+                    <!-- Display details for each signed up run -->
+                    <div v-for="run in signedUpRuns" :key="run._id" class="run-card" style="width: 17rem;">
+                        <img :src="run.imagePath" class="card-img-top" alt="Run Image">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ run.eventName }}</h5>
+                            <p class="card-text">Date: {{ new Date(run.date).toLocaleDateString() }}</p>
+                            <p class="card-text">Start Time: {{ run.startTime }}</p>
+                            <p class="card-text">Start Location: {{ run.startLocation }}</p>
+                            <p class="card-text">End Location: {{ run.endLocation }}</p>
+                            <p class="card-text">Length: {{ run.length }} miles</p>
+                            <p class="card-text">Pace: {{ run.runPace }} per mile</p>
+                            <p class="card-text">Type: {{ run.runType }}</p>
+                            <button class="btn btn-secondary" @click="openCompletionModal(run)">Mark as
+                                Completed</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- If no runs are signed up for, display a message -->
+                <div v-if="signedUpRuns.length === 0" class="alert alert-info">
+                    You are not signed up for any runs.
                 </div>
             </div>
 
             <div v-if="currentTab === 'Completed Runs'">
                 <!-- Display details for completed runs -->
+                <div class="grid-container">
+                    <div v-for="run in completedRuns" :key="run._id" class="run-card" style="width: 17rem;">
+                        <img :src="run.imagePath" class="card-img-top" alt="Run Image">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ run.eventName }}</h5>
+                            <p class="card-text">Completion Date: {{ new
+                                Date(run.userCompletion.date).toLocaleDateString() }}</p>
+                            <p class="card-text">Completed Time: {{ run.userCompletion.time }} minutes</p>
+                            <p class="card-text">Completed Distance: {{ run.completedDetails.distance }} miles</p>
+                            <p class="card-text">Completed Pace: {{ run.userCompletion.pace }} mins/mile</p>
+                            <p class="card-text">Type: {{ run.runType }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="completedRuns.length === 0" class="alert alert-info">
+                    You have not completed any runs.
+                </div>
             </div>
+
+
 
             <div v-if="currentTab === 'Stats'">
                 <!-- Display user stats -->
-                <p>Total Miles Run: {{ stats.runningStats.distance }}</p>
-                <p>Total Time Run: {{ stats.runningStats.time }} minutes</p>
+                <p>Total Miles Ran: {{ stats.runningStats.distance }}</p>
+                <p>Total Time Ran: {{ stats.runningStats.time }} minutes</p>
                 <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
+                <p>Average pace: {{ stats.runningStats.pace}}
                 <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
             </div>
         </template>
+
         <!-- Sign Up Modal -->
         <div v-if="showSignUpModal" class="modal">
             <div class="modal-content">
@@ -189,6 +235,39 @@
                 </form>
             </div>
         </div>
+
+        <!-- Mark a run completed modal -->
+        <div v-if="showCompletionModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="completionModalLabel">Mark Run as Completed</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        @click="showCompletionModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form fields -->
+                    <form @submit.prevent="markRunAsCompleted(selectedRunForCompletion._id, completionDetails)">
+                        <div class="mb-3">
+                            <label for="completion-time" class="form-label">Time (in minutes)</label>
+                            <input type="number" class="form-control" id="completion-time"
+                                v-model="completionDetails.time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="completion-distance" class="form-label">Distance (in miles)</label>
+                            <input type="number" class="form-control" id="completion-distance"
+                                v-model="completionDetails.distance" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="completion-pace" class="form-label">Pace (mins per mile)</label>
+                            <input type="number" class="form-control" id="completion-pace"
+                                v-model="completionDetails.pace" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
     <!-- Vue.js library -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
