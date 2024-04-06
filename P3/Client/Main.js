@@ -1,6 +1,11 @@
 import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+import PaceChart from './charts/PaceChart.js';
+
 
 const app = createApp({
+    components: {
+        'pace-chart': PaceChart
+    },
     data() {
         return {
             runs: [],
@@ -40,11 +45,38 @@ const app = createApp({
             showCompletionModal: false,
             completionDetails: { time: 0, distance: 0, pace: 0 },
             selectedRunForCompletion: null,
+            paceChartData: null,
+            paceChartOptions: {
+                scales: {
+                    yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Pace (min/km)'
+                        }
+                    }],
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'day'
+                        },
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        }
+                    }]
+                },
+                title: {
+                    display: true,
+                    text: 'Pace Over Time'
+                }
+            }
         };
     },
+
     mounted() {
         this.fetchRuns();
     },
+
     methods: {
         async fetchRuns() {
             try {
@@ -99,6 +131,7 @@ const app = createApp({
                     this.userId = userData.userId;
                     await this.fetchRuns();
                     await this.fetchSignedUpRuns();
+                    this.fetchUserStats();
                     this.showSection = 'eventList';
                 } else {
                     alert('Login failed!');
@@ -125,6 +158,7 @@ const app = createApp({
                     this.userId = userData.userId;
                     await this.fetchRuns();
                     await this.fetchSignedUpRuns();
+                    this.fetchUserStats();
                     this.showSection = 'eventList';
                 } else {
                     alert('Registration failed!');
@@ -249,7 +283,6 @@ const app = createApp({
             }
         },
 
-
         openCompletionModal(run) {
             console.log("Opening completion modal for run:", run);
             this.selectedRunForCompletion = run;
@@ -263,7 +296,39 @@ const app = createApp({
             console.log("showCompletionModal set to true");
         },
 
-
+        async fetchUserStats() {
+            console.log(this.userId);
+            if (!this.userId) {
+              console.error("User ID is not set.");
+              return;
+            }
+            
+            const response = await fetch(`/api/stats/user-stats/${this.userId}`);
+            if (response.ok) {
+              const statsData = await response.json();
+              this.stats.runningStats = {
+                  distance: statsData.totalDistance,
+                  time: statsData.totalTime,
+                  runs: statsData.runsCompleted,
+                  paceOverTime: statsData.paceData
+              };
+              // Now, you need to prepare and pass this data to the PaceChart component
+              this.paceChartData = this.prepareChartData(statsData.paceData);
+            } else {
+              console.error('Failed to fetch user stats');
+            }
+          },
+          prepareChartData(paceData) {
+            // Assuming paceData is an array of { date, pace } objects
+            return {
+              labels: paceData.map(entry => new Date(entry.date).toLocaleDateString()),
+              datasets: [{
+                label: 'Pace over Time',
+                backgroundColor: '#f87979',
+                data: paceData.map(entry => entry.pace)
+              }]
+            };
+          }
     },
     computed: {
         signedUpRuns() {
@@ -271,14 +336,14 @@ const app = createApp({
             return this.runs.filter(run => run.signUps.includes(this.userId) && !run.completedBy.find(completion => completion.userId === this.userId));
         },
         completedRuns() {
-            // Filter runs where the user has completed them
+            // Filter runs where the user has completed them and extract the completion details
             return this.runs
                 .filter(run => run.completedBy.some(completion => completion.userId === this.userId))
                 .map(run => {
                     const userCompletion = run.completedBy.find(completion => completion.userId === this.userId);
                     return {
                         ...run,
-                        userCompletion,
+                        completedDetails: userCompletion, // Make sure this property matches what is in your HTML template
                     };
                 });
         }

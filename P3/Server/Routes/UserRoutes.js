@@ -46,7 +46,6 @@ router.post('/login', async (req, res) => {
         }
 
         if (password === user.password) {
-            console.log(user._id)
             res.status(200).json({ msg: `Welcome, ${username}!`, userId: user._id });
         } else {
             return res.status(401).send('Login failed'); // Password does not match
@@ -75,7 +74,6 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
-    console.log(user)
 
     res.status(200).json({ msg: `Welcome, ${username}!`, userId: user._id });
 });
