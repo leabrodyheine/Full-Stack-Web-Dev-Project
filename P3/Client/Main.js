@@ -1,5 +1,5 @@
 import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
-import PaceChart from './charts/PaceChart.js';
+// import PaceChart from './charts/PaceChart.js';
 
 
 const app = createApp({
@@ -48,26 +48,28 @@ const app = createApp({
             paceChartData: null,
             paceChartOptions: {
                 scales: {
-                    yAxes: [{
-                        scaleLabel: {
+                    y: { // Change from yAxes to y
+                        title: { // Changed from scaleLabel to title
                             display: true,
-                            labelString: 'Pace (min/km)'
+                            text: 'Pace (min/km)'
                         }
-                    }],
-                    xAxes: [{
+                    },
+                    x: { // Change from xAxes to x
                         type: 'time',
                         time: {
                             unit: 'day'
                         },
-                        scaleLabel: {
+                        title: { // Changed from scaleLabel to title
                             display: true,
-                            labelString: 'Date'
+                            text: 'Date'
                         }
-                    }]
+                    }
                 },
-                title: {
-                    display: true,
-                    text: 'Pace Over Time'
+                plugins: { // Title is now part of plugins
+                    title: {
+                        display: true,
+                        text: 'Pace Over Time'
+                    }
                 }
             }
         };
@@ -299,36 +301,40 @@ const app = createApp({
         async fetchUserStats() {
             console.log(this.userId);
             if (!this.userId) {
-              console.error("User ID is not set.");
-              return;
+                console.error("User ID is not set.");
+                return;
             }
-            
+
             const response = await fetch(`/api/stats/user-stats/${this.userId}`);
             if (response.ok) {
-              const statsData = await response.json();
-              this.stats.runningStats = {
-                  distance: statsData.totalDistance,
-                  time: statsData.totalTime,
-                  runs: statsData.runsCompleted,
-                  paceOverTime: statsData.paceData
-              };
-              // Now, you need to prepare and pass this data to the PaceChart component
-              this.paceChartData = this.prepareChartData(statsData.paceData);
+                const statsData = await response.json();
+                this.stats.runningStats = {
+                    distance: statsData.totalDistance,
+                    time: statsData.totalTime,
+                    runs: statsData.runsCompleted,
+                    paceOverTime: statsData.paceData
+                };
+                // Now, you need to prepare and pass this data to the PaceChart component
+                this.paceChartData = this.prepareChartData(statsData.paceData);
+                console.log('Fetched Stats Data:', statsData);
+                console.log('Prepared Chart Data:', this.prepareChartData(statsData.paceData));
+                console.log('Chart.js version:', Chart.version);
+
             } else {
-              console.error('Failed to fetch user stats');
+                console.error('Failed to fetch user stats');
             }
-          },
-          prepareChartData(paceData) {
+        },
+        prepareChartData(paceData) {
             // Assuming paceData is an array of { date, pace } objects
             return {
-              labels: paceData.map(entry => new Date(entry.date).toLocaleDateString()),
-              datasets: [{
-                label: 'Pace over Time',
-                backgroundColor: '#f87979',
-                data: paceData.map(entry => entry.pace)
-              }]
+                labels: paceData.map(entry => new Date(entry.date).toLocaleDateString()),
+                datasets: [{
+                    label: 'Pace over Time',
+                    backgroundColor: '#f87979',
+                    data: paceData.map(entry => entry.pace)
+                }]
             };
-          }
+        }
     },
     computed: {
         signedUpRuns() {
@@ -348,4 +354,8 @@ const app = createApp({
                 });
         }
     }
-}).mount('#app');
+})
+// Register the PaceChart component globally
+app.component('pace-chart', PaceChart);
+
+app.mount('#app');

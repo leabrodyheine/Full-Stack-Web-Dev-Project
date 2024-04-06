@@ -7,7 +7,7 @@ router.get('/user-stats/:userId', async (req, res) => {
   const { userId } = req.params;
   console.log(userId)
   // Convert string to ObjectId for MongoDB
-  const objectIdUserId = mongoose.Types.ObjectId(userId);
+  const objectIdUserId = new mongoose.Types.ObjectId(userId);
 
   try {
     const runs = await Run.find({ 'completedBy.userId': objectIdUserId });

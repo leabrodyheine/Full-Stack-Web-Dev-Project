@@ -80,7 +80,7 @@ router.get('/signed-up/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     // Convert string to ObjectId for MongoDB
-    const objectIdUserId = mongoose.Types.ObjectId(userId);
+    const objectIdUserId = new mongoose.Types.ObjectId(userId);
     const signedUpRuns = await Run.find({ 'signUps': objectIdUserId });
 
     if (signedUpRuns) {
