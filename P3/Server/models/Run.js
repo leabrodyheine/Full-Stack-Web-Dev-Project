@@ -1,7 +1,19 @@
 const mongoose = require('mongoose');
 
 const RunSchema = new mongoose.Schema({
-  stops: [{ latitude: Number, longitude: Number, description: String }],
+  stopsCoordinate: [{
+    latitude: Number,
+    longitude: Number,
+    description: String
+  }],
+  startLocationCoordinate: {
+    type: { latitude: Number, longitude: Number },
+    required: true
+  },
+  endLocationCoordinate: {
+    type: { latitude: Number, longitude: Number },
+    required: true
+  },
   signUps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Renamed for consistency
   length: Number, // miles
   totalTime: Number, // total estimated time of run

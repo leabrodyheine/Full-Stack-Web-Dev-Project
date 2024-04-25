@@ -1,3 +1,5 @@
+/* @font-face */
+
 /* Main Styling */
 body {
     background-color: #dfe9ec;
@@ -69,6 +71,42 @@ h2 {
     margin: auto;
 }
 
+/* Create Run */
+.create-run-container {
+    display: flex;
+    flex-direction: row;
+    height: 90vh;
+}
+
+.map-container,
+.form-container {
+    flex: 1;
+    height: 90%;
+    padding: 20px;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    border-radius: 7%;
+}
+
+#create-run-header {
+    text-align: center;
+}
+
+.legend {
+    background: white;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    position: absolute;
+    bottom: 30px;
+    left: 10px;
+    z-index: 1;
+}
+
+
 /* run cards */
 .grid-container {
     display: grid;
@@ -78,10 +116,10 @@ h2 {
 }
 
 .card-img-top {
-    width: 100%; /* ensures the image spans the full width of the card */
-    height: 160px; /* fixed height for all images */
-    object-fit: cover; /* cover the container while maintaining aspect ratio */
-    object-position: center; /* center the image within the element */
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    object-position: center;
 }
 
 .run-card {
@@ -128,7 +166,6 @@ h2 {
 /* Sign Up Modal */
 .modal {
     display: block;
-    /* Hidden by default; set to 'none' to hide modal */
     position: fixed;
     z-index: 1;
     left: 0;
@@ -147,7 +184,6 @@ h2 {
     border: 1px solid #888;
     width: 80%;
     max-width: 500px;
-    /* Could be more or less, depending on screen size */
 }
 
 .close {

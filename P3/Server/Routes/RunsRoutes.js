@@ -9,8 +9,8 @@ const mongoose = require('mongoose');
 
 router.get('/', async (req, res) => {
   try {
-    const runs = await Run.find(); // Fetch all runs
-    res.json(runs); // Send the runs back in the response
+    const runs = await Run.find();
+    res.json(runs); 
   } catch (error) {
     console.error(error);
     res.status(500).send('Error fetching runs');
@@ -31,20 +31,26 @@ router.post('/api/geocode', async (req, res) => {
 
 // POST endpoint for creating a new run
 router.post('/create', async (req, res) => {
+  const {
+    stopsCoordinate, startLocationCoordinate, endLocationCoordinate,
+    eventName, date, startTime, startLocation, endLocation, runType, runPace, length, totalTime
+  } = req.body;
+
   try {
-    const { stops, length, totalTime, date, startTime, startLocation, endLocation, runType, runPace } = req.body;
     const newRun = new Run({
-      stops,
-      length,
-      totalTime,
+      stopsCoordinate,
+      startLocationCoordinate,
+      endLocationCoordinate,
+      eventName,
       date,
       startTime,
       startLocation,
       endLocation,
       runType,
       runPace,
+      length,
+      totalTime,
     });
-
     await newRun.save();
     res.status(201).json(newRun);
   } catch (error) {

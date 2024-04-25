@@ -10,6 +10,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-vue@3.0.0-beta.5/dist/bootstrap-vue.min.css" rel="stylesheet">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css' rel='stylesheet' />
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.3.1/mapbox-gl-directions.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.3.1/mapbox-gl-directions.css"
+        type="text/css">
+
     <link rel="stylesheet" href="/StyleSheet.css">
     <title>CS 5003 P3</title>
 </head>
@@ -25,7 +33,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" :class="{ active: showSection === 'createRun' }"
-                        @click.prevent="showSection = 'createRun'">Create New Run</a>
+                        @click.prevent="showCreateRun">Create New Run</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" :class="{ active: showSection === 'profile' }"
@@ -80,71 +88,82 @@
 
 
         <!-- Create Run Form -->
-        <div v-if="showSection === 'createRun'">
-            <h2>Create Run</h2>
-            <form @submit.prevent="submitRun">
-                <!-- Run Name -->
-                <div class="mb-3">
-                    <label for="event-name" class="form-label">Event Name</label>
-                    <input type="text" class="form-control" id="event-name" v-model="eventName"
-                        placeholder="Saturday Afternoon Run" required>
+        <h2 id="create-run-header" style='display: none;'>Create Run</h2>
+        <div v-if="showSection === 'createRun'" class="create-run-container">
+            <div class="map-container">
+                <div>
+                    <button @click="currentMarkerType = 'start'">Place Start</button>
+                    <button @click="currentMarkerType = 'end'">Place End</button>
+                    <button @click="currentMarkerType = 'stop'">Place Stop</button>
                 </div>
+                <div id="map" style="height: 100%;"></div>
+            </div>
 
-                <!-- Date -->
-                <div class="mb-3">
-                    <label for="event-date" class="form-label">Date</label>
-                    <input type="date" class="form-control" id="event-date" v-model="eventDate" required>
-                </div>
+            <div class="form-container">
+                <form @submit.prevent="submitRun">
+                    <!-- Run Name -->
+                    <div class="mb-3">
+                        <label for="event-name" class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="event-name" v-model="eventName"
+                            placeholder="Saturday Afternoon Run" required>
+                    </div>
 
-                <!-- Start Time -->
-                <div class="mb-3">
-                    <label for="start-time" class="form-label">Start Time</label>
-                    <input type="time" class="form-control" id="start-time" v-model="startTime" required>
-                </div>
+                    <!-- Date -->
+                    <div class="mb-3">
+                        <label for="event-date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="event-date" v-model="eventDate" required>
+                    </div>
 
-                <!-- Start Location -->
-                <div class="mb-3">
-                    <label for="start-location" class="form-label">Starting Location</label>
-                    <input type="text" class="form-control" id="start-location" v-model="startLocation"
-                        placeholder="e.g., Central Park, New York" required>
-                </div>
+                    <!-- Start Time -->
+                    <div class="mb-3">
+                        <label for="start-time" class="form-label">Start Time</label>
+                        <input type="time" class="form-control" id="start-time" v-model="startTime" required>
+                    </div>
 
-                <!-- End Location -->
-                <div class="mb-3">
-                    <label for="end-location" class="form-label">Ending Location</label>
-                    <input type="text" class="form-control" id="end-location" v-model="endLocation"
-                        placeholder="e.g., Central Park, New York" required>
-                </div>
+                    <!-- Start Location -->
+                    <div class="mb-3">
+                        <label for="start-location" class="form-label">Starting Location</label>
+                        <input type="text" class="form-control" id="start-location" v-model="startLocation"
+                            placeholder="e.g., Central Park, New York" required>
+                    </div>
 
-                <!-- Run Length in Miles -->
-                <div class="mb-3">
-                    <label for="run-length" class="form-label">Miles</label>
-                    <input type="number" class="form-control" id="run-length" v-model="length" placeholder="e.g., 3"
-                        required>
-                </div>
+                    <!-- End Location -->
+                    <div class="mb-3">
+                        <label for="end-location" class="form-label">Ending Location</label>
+                        <input type="text" class="form-control" id="end-location" v-model="endLocation"
+                            placeholder="e.g., Central Park, New York" required>
+                    </div>
 
-                <!-- Pace -->
-                <div class="mb-3">
-                    <label for="run-pace" class="form-label">Average Mins Per Mile</label>
-                    <input type="number" class="form-control" id="run-pace" v-model="pace" placeholder="e.g., 3"
-                        required>
-                </div>
+                    <!-- Run Length in Miles -->
+                    <div class="mb-3">
+                        <label for="run-length" class="form-label">Miles</label>
+                        <input type="number" class="form-control" id="run-length" v-model="length" placeholder="e.g., 3"
+                            required>
+                    </div>
 
-                <!-- Run Type -->
-                <div class="mb-3">
-                    <label for="run-type" class="form-label">Run Type</label>
-                    <select class="form-select" id="run-type" v-model="runType" required>
-                        <option value="loop">Loop</option>
-                        <option value="Out and Back">Out and Back</option>
-                        <option value="Point to Point">Point to Point</option>
-                    </select>
-                </div>
+                    <!-- Pace -->
+                    <div class="mb-3">
+                        <label for="run-pace" class="form-label">Average Mins Per Mile</label>
+                        <input type="number" class="form-control" id="run-pace" v-model="pace" placeholder="e.g., 3"
+                            required>
+                    </div>
 
-                <!-- Submit Button -->
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Submit Run</button>
-                </div>
-            </form>
+                    <!-- Run Type -->
+                    <div class="mb-3">
+                        <label for="run-type" class="form-label">Run Type</label>
+                        <select class="form-select" id="run-type" v-model="runType" required>
+                            <option value="loop">Loop</option>
+                            <option value="Out and Back">Out and Back</option>
+                            <option value="Point to Point">Point to Point</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Submit Run</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- profile -->
