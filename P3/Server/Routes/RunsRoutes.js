@@ -1,13 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { parseGPX } = require('../GxpParser.js');
 const Run = require('../models/Run');
-const { geocodeLocation } = require('../GeoCoding.js');
 const mongoose = require('mongoose');
 
 
+// Helper function to compute experience level based on run data
+function computeExperienceLevel(distance, totalTime) {
+    const speed = distance / (totalTime / 60); // Speed in km/h
+    if (speed > 7.5) return 'Expert';
+    else if (speed > 6) return 'Advanced';
+    else if (speed > 4.5) return 'Intermediate';
+    else return 'Beginner';
+  }
 
-router.get('/', async (req, res) => {
+// GET endpoint to fetch all runs
+router.get('/allRuns', async (req, res) => {
   try {
     const runs = await Run.find();
     res.json(runs); 
@@ -15,49 +22,32 @@ router.get('/', async (req, res) => {
     console.error(error);
     res.status(500).send('Error fetching runs');
   }
-});
+})
 
-router.post('/api/geocode', async (req, res) => {
-  const { locationString } = req.body;
-  try {
-    const coordinates = await geocodeLocation(locationString);
-    res.json({ coordinates });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error during geocoding');
-  }
-});
-
-
-// POST endpoint for creating a new run
+// POST endpoint for creating a new run with automatic experience level calculation
 router.post('/create', async (req, res) => {
   const {
     stopsCoordinate, startLocationCoordinate, endLocationCoordinate,
     eventName, date, startTime, startLocation, endLocation, runType, runPace, length, totalTime
   } = req.body;
 
+  const experienceLevel = computeExperienceLevel(length, totalTime);
+
   try {
     const newRun = new Run({
-      stopsCoordinate,
-      startLocationCoordinate,
-      endLocationCoordinate,
-      eventName,
-      date,
-      startTime,
-      startLocation,
-      endLocation,
-      runType,
-      runPace,
-      length,
-      totalTime,
+      stopsCoordinate, startLocationCoordinate, endLocationCoordinate,
+      eventName, date, startTime, startLocation, endLocation,
+      runType, runPace, length, totalTime, experienceLevel
     });
     await newRun.save();
     res.status(201).json(newRun);
   } catch (error) {
-    console.error(error);
+    console.error('Server error creating the run:', error);
     res.status(500).send('Server error creating the run');
   }
 });
+
+
 
 router.put('/signup/:runId', async (req, res) => {
   try {
@@ -69,7 +59,6 @@ router.put('/signup/:runId', async (req, res) => {
       return res.status(404).send('Run not found');
     }
 
-    // Check if userId is not already in the signUps array
     if (!run.signUps.includes(userId)) {
       run.signUps.push(userId);
       await run.save();
@@ -85,7 +74,6 @@ router.put('/signup/:runId', async (req, res) => {
 router.get('/signed-up/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    // Convert string to ObjectId for MongoDB
     const objectIdUserId = new mongoose.Types.ObjectId(userId);
     const signedUpRuns = await Run.find({ 'signUps': objectIdUserId });
 
@@ -101,6 +89,7 @@ router.get('/signed-up/:userId', async (req, res) => {
 });
 
 router.post('/complete/:runId', async (req, res) => {
+  console.log("Received data:", req.body);
   const { runId } = req.params;
   const { userId, time, distance, pace } = req.body;
 
@@ -112,10 +101,9 @@ router.post('/complete/:runId', async (req, res) => {
 
     const completionDetails = { userId, time, distance, pace, date: new Date() };
     run.completedBy.push(completionDetails);
-
+    console.log("run route ", completionDetails)
     await run.save();
 
-    // Modify the response to send back the updated run with the completion details
     const updatedRun = await Run.findById(runId).populate('completedBy.userId');
     res.json(updatedRun);
   } catch (error) {
@@ -124,25 +112,23 @@ router.post('/complete/:runId', async (req, res) => {
   }
 });
 
-
-
-router.get('/importGPX', async (req, res) => {
+router.post('/filtered', async (req, res) => {
+  console.log("Request body:", req.body);
   try {
-    const gpxData = await parseGPX('./Blacks-Mountain-Half-Marathon-2019.gpx');
-    const runEvent = {
-      eventName: "Blacks Mountain Half-Marathon 2019",
-      // Assuming gpxData contains an array of waypoints or similar data you can use
-      startLocation: { lat: gpxData.tracks[0].segments[0][0].lat, lng: gpxData.tracks[0].segments[0][0].lon },
-      endLocation: {
-        lat: gpxData.tracks[0].segments[0].slice(-1)[0].lat,
-        lng: gpxData.tracks[0].segments[0].slice(-1)[0].lon
-      },
-    }
-    res.json(gpxData);
+      const { experienceLevel } = req.body;
+      let query = {};
+
+      if (experienceLevel) {
+          query.experienceLevel = experienceLevel;
+      }
+
+      const runs = await Run.find(query);
+      res.json(runs);
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Failed to parse GPX file');
+      console.error('Error fetching filtered runs:', error);
+      res.status(500).send('Server error');
   }
 });
+
 
 module.exports = router;

@@ -1,4 +1,51 @@
-const runs = [
+const mongoose = require('mongoose');
+const DB = require('./DB');
+const Run = require('../Server/models/Run');
+
+// MongoDB connection string
+const mongoURI = 'mongodb://localhost:27017/socialRunnersPlatform';
+
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
+  
+  
+  const runs = [
+    {
+        stopsCoordinate: [
+          { latitude: 40.7128, longitude: -74.0060, description: "Stop 1" },
+          { latitude: 40.7127, longitude: -74.0059, description: "Stop 2" }
+        ],
+        startLocationCoordinate: { latitude: 40.7128, longitude: -74.0060 },
+        endLocationCoordinate: { latitude: 40.7138, longitude: -74.0061 },
+        signUps: [],
+        length: 5,
+        totalTime: 50,
+        date: new Date(),
+        startTime: "07:00 AM",
+        startLocation: "Central Park",
+        endLocation: "Riverside Park",
+        pace: 10,
+        runType: "loop",
+        completedBy: []
+      },
+      {
+        stopsCoordinate: [
+          { latitude: 34.0522, longitude: -118.2437, description: "LA Start" }
+        ],
+        startLocationCoordinate: { latitude: 34.0522, longitude: -118.2437 },
+        endLocationCoordinate: { latitude: 34.0522, longitude: -118.2437 },
+        signUps: [],
+        length: 10,
+        totalTime: 100,
+        date: new Date(),
+        startTime: "09:00 AM",
+        startLocation: "Downtown LA",
+        endLocation: "Downtown LA",
+        pace: 10,
+        runType: "out and back",
+        completedBy: []
+      },
     {
         stopsCoordinate: [],
         startLocationCoordinate: { latitude: 34.0522, longitude: -118.2437 },
@@ -131,9 +178,56 @@ const runs = [
         startLocation: 'San Francisco, CA',
         endLocation: 'Golden Gate Park',
         pace: 8,
-        runType: 'point-to-point',
+        runType: 'point to point',
         completedBy: []
       },
 ];
 
-module.exports = runs;
+const intermediateRuns = Array.from({ length: 5 }).map((_, i) => ({
+  stopsCoordinate: [],
+  startLocationCoordinate: { latitude: 34.0522, longitude: -118.2437 + i * 0.01 },
+  endLocationCoordinate: { latitude: 34.0522, longitude: -118.2437 + i * 0.01 },
+  signUps: [],
+  length: 5,
+  totalTime: 60 + i * 2, 
+  date: new Date(),
+  startTime: "09:00 AM",
+  startLocation: "Downtown LA",
+  endLocation: "Downtown LA",
+  pace: 12 - i * 0.4,
+  runType: "loop",
+  completedBy: [],
+  experienceLevel: "Intermediate"
+}));
+
+const beginnerRuns = Array.from({ length: 5 }).map((_, i) => ({
+  stopsCoordinate: [],
+  startLocationCoordinate: { latitude: 40.7128, longitude: -74.006 + i * 0.01 },
+  endLocationCoordinate: { latitude: 40.7128, longitude: -74.006 + i * 0.01 },
+  signUps: [],
+  length: 5,
+  totalTime: 70 + i * 5,
+  date: new Date(),
+  startTime: "07:00 AM",
+  startLocation: "Central Park",
+  endLocation: "Central Park",
+  pace: 14 + i * 0.5,
+  runType: "loop",
+  completedBy: [],
+  experienceLevel: "Beginner"
+}));
+
+
+// Function to insert runs into the database
+async function insertRuns() {
+    try {
+      await Run.insertMany([...intermediateRuns, ...beginnerRuns]);
+      console.log('Runs have been added!');
+    } catch (error) {
+      console.error('Error inserting runs:', error);
+    } finally {
+      mongoose.disconnect();
+    }
+  }
+  
+  insertRuns();

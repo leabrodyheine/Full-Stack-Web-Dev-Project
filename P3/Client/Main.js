@@ -33,6 +33,9 @@ const app = createApp({
             startLocationCoordinates: null,
             endLocationCoordinates: null,
             stopsCoordinates: [],
+            selectedExperienceLevel: '',
+            selectedLocation: '',
+            fetchTimeout: null,
             stats: {
                 runningStats: {
                     distance: 0,
@@ -110,7 +113,7 @@ const app = createApp({
     methods: {
         async fetchRuns() {
             try {
-                const response = await fetch('/api/runs');
+                const response = await fetch('/api/runs/allRuns');
                 if (response.ok) {
                     let runsData = await response.json();
                     runsData = runsData.map(run => ({
@@ -126,6 +129,29 @@ const app = createApp({
                 console.error('Error fetching runs:', error);
             }
         },
+
+        async fetchFilteredRuns() {
+            console.log(this.selectedExperienceLevel);
+            try {
+                const response = await fetch('/api/runs/filtered', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        experienceLevel: this.selectedExperienceLevel
+                    })
+                });
+                if (response.ok) {
+                    this.runs = await response.json();
+                } else {
+                    console.log(response)
+                    console.error('Failed to fetch filtered runs');
+                }
+            } catch (error) {
+                console.error('Error fetching runs:', error);
+            }
+        },        
 
         showCreateRun() {
             this.showSection = 'createRun';
@@ -426,16 +452,18 @@ const app = createApp({
             }
         },
 
-        calculateExperienceLevel(distance) {
-            // logic here later
-        },
-
         getRunImage() {
             const index = Math.floor(Math.random() * this.imagePaths.length);
             return this.imagePaths[index];
         },
 
         async markRunAsCompleted() {
+            console.log("Submitting run completion details:", {
+                userId: this.userId,
+                time: this.completionDetails.time,
+                distance: this.completionDetails.distance,
+                pace: this.completionDetails.pace,
+            });
             try {
                 const response = await fetch(`/api/runs/complete/${this.selectedRunForCompletion._id}`, {
                     method: 'POST',
@@ -481,21 +509,59 @@ const app = createApp({
                 console.error("User ID is not set.");
                 return;
             }
-
             const response = await fetch(`/api/stats/user-stats/${this.userId}`);
             if (response.ok) {
                 const statsData = await response.json();
-                this.stats.runningStats = {
-                    distance: statsData.totalDistance,
-                    time: statsData.totalTime,
-                    runs: statsData.runsCompleted,
-                    paceOverTime: statsData.paceData
-                };
-                this.paceChartData = this.prepareChartData(statsData.paceData);
+                // Ensure statsData is not null and has the properties we expect
+                if (statsData && 'totalDistance' in statsData && 'totalTime' in statsData && 'runsCompleted' in statsData) {
+                    this.stats.runningStats.distance = statsData.totalDistance;
+                    this.stats.runningStats.time = statsData.totalTime;
+                    this.stats.runningStats.runs = statsData.runsCompleted;
+                    this.stats.runningStats.pace = this.calculateAveragePace(statsData);
+                    this.stats.runningStats.experienceLevel = this.calculateExperienceLevel(statsData);
+                    this.paceChartData = this.prepareChartData(statsData.paceData || []); // Provide a fallback in case paceData is undefined
+                } else {
+                    // Handle the case where statsData doesn't have the information we need
+                    console.error('User stats data is missing required properties.');
+                }
             } else {
                 console.error('Failed to fetch user stats');
             }
         },
+
+
+        calculateAveragePace(statsData) {
+            if (!statsData.paceData || statsData.paceData.length === 0) {
+                return 0;
+            }
+            let totalPace = 0;
+            let count = 0;
+            statsData.paceData.forEach(entry => {
+                if (entry.pace) {
+                    totalPace += entry.pace;
+                    count++;
+                }
+            });
+            if (count === 0) return 0;
+            return (totalPace / count).toFixed(2);
+        },
+
+        calculateExperienceLevel(statsData) {
+            const totalDistance = statsData.totalDistance;
+
+            if (totalDistance < 50) {
+                return 'Beginner';
+            } else if (totalDistance >= 50 && totalDistance < 150) {
+                return 'Intermediate';
+            } else if (totalDistance >= 150 && totalDistance < 400) {
+                return 'Advanced';
+            } else if (totalDistance >= 400) {
+                return 'Expert';
+            } else {
+                return 'Beginner'
+            }
+        },
+
         prepareChartData(paceData) {
             return {
                 labels: paceData.map(entry => new Date(entry.date).toLocaleDateString()),

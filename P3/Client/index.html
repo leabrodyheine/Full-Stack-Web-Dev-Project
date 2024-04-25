@@ -68,6 +68,17 @@
         <!-- Event List -->
         <div v-if="showSection === 'eventList' && !showProfile" class="event-grid">
             <h2>Event List</h2>
+            <!-- File: index.html -->
+            <select v-model="selectedExperienceLevel" @change="fetchFilteredRuns">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+            </select>
+
+            <!-- <input type="text" v-model="selectedLocation" @input="fetchFilteredRuns" placeholder="Enter location"> -->
+
+
             <div class="grid-container">
                 <div v-for="(run, index) in runs" :key="run._id" class="run-card" style="width: 17rem;">
                     <img :src="imagePaths[index % imagePaths.length]" class="card-img-top" alt="Run Image">
@@ -241,7 +252,7 @@
                 <p>Average pace: {{ stats.runningStats.pace}}
                 <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
                 <!-- ... other stats elements ... -->
-                <pace-chart v-if="paceChartData" :chart-data="paceChartData" :options="paceChartOptions"></pace-chart>
+                <!-- <pace-chart v-if="paceChartData" :chart-data="paceChartData" :options="paceChartOptions"></pace-chart> -->
             </div>
         </template>
 

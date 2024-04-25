@@ -31,8 +31,10 @@ const RunSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     time: Number, // in minutes
     date: Date,
+    distance: Number,
     pace: Number, // min per mile
   }],
+  experienceLevel: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'], required: true }
 });
 
 module.exports = mongoose.model('Run', RunSchema);

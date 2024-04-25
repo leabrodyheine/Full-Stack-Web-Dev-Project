@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 
-const StatsSchema = new mongoose.Schema({
-  username: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  runningStats: {
-    distance: Number, // total miles ran
-    time: Number, // total minutes ran 
-    runs: Number, // number of runs
-    experience: String,
-    pace: Number, // average mile pace
-  }
+const statsSchema = new mongoose.Schema({
+  userId: mongoose.Schema.Types.ObjectId,
+  totalDistance: Number,
+  totalTime: Number,
+  runs: Number,
+  paceData: [{
+    date: Date,
+    pace: Number
+  }]
 });
 
-module.exports = mongoose.model('Stats', StatsSchema);
+module.exports = mongoose.model('Stats', statsSchema);

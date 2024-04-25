@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Run = require('../models/Run');
+const Stats = require('../models/Stats');
+
 
 router.get('/user-stats/:userId', async (req, res) => {
   const { userId } = req.params;
