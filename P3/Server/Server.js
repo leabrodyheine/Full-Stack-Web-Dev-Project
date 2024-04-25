@@ -21,15 +21,13 @@ app.use(express.static(path.join(__dirname, '..', 'Client')));
 
 // Apply middleware
 app.use(express.json());
-// app.use(geocodeRoutes);
 
 
-// Define Routes
 app.use('/api/users', require('./Routes/UserRoutes.js'));
 app.use('/api/stats', require('./Routes/StatsRoutes.js'));
 app.use('/api/runs', require('./Routes/RunsRoutes.js'));
 app.use((req, res, next) => {
-    console.log('Request URL:', req.originalUrl); // Logs the request URL
+    console.log('Request URL:', req.originalUrl); 
     next();
 });
 
@@ -39,6 +37,9 @@ const PORT = process.env.PORT || 5030;
 // START HTML
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Client', 'index.html'));
+});
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'Client', 'StyleSheet.css'));
 });
 
 // START SERVER

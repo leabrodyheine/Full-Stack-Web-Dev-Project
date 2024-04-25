@@ -1,109 +1,93 @@
 /* @font-face */
-
-/* Main Styling */
-body {
-    background-color: #dfe9ec;
+@font-face {
+    font-family: 'MANIFESTO';
+    src: url('/fonts/MANIFESTO.ttf') format('truetype');
 }
 
-head {
-    text-align: center;
+@font-face {
+    font-family: 'Orkney';
+    src: url('/fonts/Orkney_Regular.ttf') format('truetype');
+}
+
+/* Main Styling */
+/* Basic reset to minimize browser inconsistencies */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    height: 100%;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+a {
+    color: #66a0d3;
+    text-decoration: none;
 }
 
 h1 {
+    font-family: "Orkney";
     text-align: center;
-    padding-top: 30px;
+    padding-top: 60px;
+    letter-spacing: 6px;
+    font-size: 3em;
+    margin-bottom: 1rem;
 }
 
 h2 {
     text-align: center;
+    font-family: monospace;
+    font-size: 1.8em;
+    margin-bottom: 1rem;
+}
+
+
+/* Navigation Bar */
+.nav-wrapper {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    /* Bootstrap z-index for sticky */
 }
 
 .nav-tabs {
     background-color: #566f8b;
     border-bottom: 2px solid #333;
+    margin-bottom: 0;
+    /* Removes the gap under nav */
 }
 
-.nav-wrapper {
-    background-color: #f8f9fa;
-    border-bottom: 1pxrgb(233, 244, 255)#dee2e6;
+.nav-item {
+    margin-bottom: -1px;
+    /* Aligns tabs with border */
 }
 
 .nav-link {
     color: #f8f9fa;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .nav-link.active {
     background-color: #fff;
     color: #333;
     border-color: #dee2e6 #dee2e6 #fff;
-    border-bottom: 2px solid #007bff;
 }
 
-/* profile */
-.profile-icon {
-    position: fixed;
-    top: 20px;
-    align-items: right;
-    right: 20px;
-    cursor: pointer;
-    font-size: 24px;
+.nav-link:hover {
+    color: #a9c9ec;
 }
 
-.back-to-runs-button {
-    background-color: #f5f5f5;
-    color: #333;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.back-to-runs-button:hover {
-    background-color: #e0e0e0;
-}
-
-
-/* log in/register */
-#username,
-#password {
-    width: 100%;
+/* Main Content */
+.container {
+    width: 90%;
     margin: auto;
-}
-
-/* Create Run */
-.create-run-container {
-    display: flex;
-    flex-direction: row;
-    height: 90vh;
-}
-
-.map-container,
-.form-container {
-    flex: 1;
-    height: 90%;
-    padding: 20px;
-}
-
-#map {
-    width: 100%;
-    height: 100%;
-    border-radius: 7%;
-}
-
-#create-run-header {
-    text-align: center;
-}
-
-.legend {
-    background: white;
-    padding: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    position: absolute;
-    bottom: 30px;
-    left: 10px;
-    z-index: 1;
+    max-width: 1200px;
 }
 
 
@@ -149,7 +133,7 @@ h2 {
 }
 
 .run-card button {
-    background-color: #afbef3;
+    background-color: #9eaeea;
     color: white;
     border: none;
     border-radius: 5px;
@@ -159,7 +143,158 @@ h2 {
 }
 
 .run-card button:hover {
+    background-color: #7085d1;
+}
+
+/* Filter Styling */
+.select-filter {
+    display: block;
+    text-align: left;
+    padding-left: 40px;
+    width: 20%;
+    margin: 1.5rem auto;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.select-filter:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+
+.back-to-runs-button {
+    background-color: #f5f5f5;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.back-to-runs-button:hover {
+    background-color: #e0e0e0;
+    color: #5581b0
+}
+
+/* Forms & Inputs */
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+select,
+button,
+.btn {
+    border-radius: 5px;
+    transition: box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="number"]:focus,
+select:focus {
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+.btn-primary {
     background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+    opacity: 0.85;
+}
+
+/* log in/register */
+#username,
+#password {
+    width: 100%;
+    margin: auto;
+}
+
+/* Create Run */
+.create-run-container {
+    display: flex;
+    flex-direction: row;
+    height: 90vh;
+}
+
+.map-container,
+.form-container {
+    flex: 1;
+    height: 90%;
+    padding: 20px;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    border-radius: 7%;
+}
+
+/* Map Button Styling */
+.map-button-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    bottom: 20px;
+    z-index: 10;
+}
+
+.map-button {
+    background-color: #d0d9fd;
+    color: #505050;
+    border: none;
+    padding: 10px 10px;
+    margin-bottom: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.map-button:hover {
+    background-color: #7085d1;
+    transform: translateY(-2px);
+}
+
+.map-button:active {
+    background-color: #d0d0d0;
+    transform: translateY(1px);
+}
+
+#create-run-header {
+    text-align: center;
+}
+
+.legend {
+    background: white;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    position: absolute;
+    bottom: 30px;
+    left: 10px;
+    z-index: 1;
 }
 
 
@@ -174,7 +309,6 @@ h2 {
     height: 100%;
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.4);
-    /* Black w/ opacity */
 }
 
 .modal-content {
@@ -198,4 +332,14 @@ h2 {
     color: black;
     text-decoration: none;
     cursor: pointer;
+}
+
+.footer {
+    background: #333;
+    color: #fff;
+    text-align: center;
+    padding: 1rem 0;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
 }
