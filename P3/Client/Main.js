@@ -160,6 +160,46 @@ const app = createApp({
             }
         },
 
+        sortRuns(event) {
+            const sortBy = event.target.value;
+            switch (sortBy) {
+                case 'sortByDate':
+                    console.log("sorting by date")
+                    this.sortByDate();
+                    break;
+                case 'sortByLength':
+                    console.log("sorting by length")
+                    this.sortByLength();
+                    break;
+                case 'sortByDifficulty':
+                    console.log("sorting by difficulty")
+
+                    this.sortByDifficulty();
+                    break;
+                default:
+                    this.sortByDate();
+                    break;
+            }
+        },
+    
+        sortByDate() {
+            this.runs.sort((a, b) => new Date(a.date) - new Date(b.date));
+        },
+    
+        sortByLength() {
+            this.runs.sort((a, b) => a.length - b.length);
+        },
+    
+        sortByDifficulty() {
+            const difficultyMap = {
+                'Beginner': 1,
+                'Intermediate': 2,
+                'Advanced': 3,
+                'Expert': 4
+            };
+            this.runs.sort((a, b) => difficultyMap[a.experienceLevel] - difficultyMap[b.experienceLevel]);
+        },
+
         showCreateRun() {
             this.showSection = 'createRun';
             document.getElementById('create-run-header').style.display = 'block'
@@ -433,7 +473,7 @@ const app = createApp({
                     runPace: this.calculatePace(),
                     length: this.runLengthMiles,
                     totalTime: this.totalTime,
-                }; 
+                };
                 const response = await fetch('/api/runs/create', {
                     method: 'POST',
                     headers: {
@@ -465,7 +505,7 @@ const app = createApp({
             const pace = this.totalTime / this.runLengthMiles;  // Correct the variable name here
             console.log('Calculated pace:', pace);
             return pace;
-        },               
+        },
 
         async submitSignUp() {
             try {

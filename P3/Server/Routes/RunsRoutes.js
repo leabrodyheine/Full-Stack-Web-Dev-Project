@@ -74,8 +74,10 @@ router.put('/signup/:runId', async (req, res) => {
     if (!run.signUps.includes(userId)) {
       run.signUps.push(userId);
       await run.save();
+      res.status(200).json(run);
+    } else {
+      res.status(400).send('User is already signed up for this run');
     }
-    res.status(200).json(run);
   } catch (error) {
     console.error(error);
     res.status(500).send('Error signing up for the run');
