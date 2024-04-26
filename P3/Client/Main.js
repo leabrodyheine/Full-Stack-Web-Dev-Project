@@ -3,9 +3,7 @@ import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
 const mapboxAccessToken = 'pk.eyJ1IjoibGJoNSIsImEiOiJjbHU1bzBtc3IwdHljMmlueGc2aWQwamIxIn0.KFx5qzUkJz9ubiQ41wxYpg'
 
 const app = createApp({
-    components: {
-        'pace-chart': PaceChart
-    },
+
     data() {
         return {
             runs: [],
@@ -21,8 +19,8 @@ const app = createApp({
             startLocation: '',
             endLocation: '',
             runType: '',
-            runPace: '',
-            runLength: '',
+            runPace: null,
+            runLengthMiles: null,
             totalTime: '',
             showProfile: false,
             currentTab: 'Signed Up Runs',
@@ -33,9 +31,13 @@ const app = createApp({
             startLocationCoordinates: null,
             endLocationCoordinates: null,
             stopsCoordinates: [],
-            selectedExperienceLevel: '',
-            selectedLocation: '',
-            fetchTimeout: null,
+            selectedExperienceLevel: 'all',
+            userExperienceLevel: '',
+            currentLocation: null,
+            maxDistance: 5000,
+            selectedRunLength: 'all',
+            selectedRunTime: 'all',
+            date: '',
             stats: {
                 runningStats: {
                     distance: 0,
@@ -76,33 +78,6 @@ const app = createApp({
             showCompletionModal: false,
             completionDetails: { time: 0, distance: 0, pace: 0 },
             selectedRunForCompletion: null,
-            paceChartData: null,
-            paceChartOptions: {
-                scales: {
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Pace (min/km)'
-                        }
-                    },
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Date'
-                        }
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Pace Over Time'
-                    }
-                }
-            }
         };
     },
 
@@ -131,7 +106,7 @@ const app = createApp({
         },
 
         async fetchFilteredRuns() {
-            console.log(this.selectedExperienceLevel);
+            const runLengthQuery = this.getRunLengthQuery(this.selectedRunLength);
             try {
                 const response = await fetch('/api/runs/filtered', {
                     method: 'POST',
@@ -139,19 +114,51 @@ const app = createApp({
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        experienceLevel: this.selectedExperienceLevel
+                        experienceLevel: this.selectedExperienceLevel === 'all' ? '' : this.selectedExperienceLevel,
+                        location: this.currentLocation,
+                        maxDistance: this.maxDistance,
+                        length: this.selectedRunLength === 'all' ? '' : runLengthQuery,
+                        runTime: this.selectedRunTime === 'all' ? '' : this.selectedRunTime,
+                        date: this.selectedDate
                     })
                 });
                 if (response.ok) {
                     this.runs = await response.json();
                 } else {
-                    console.log(response)
                     console.error('Failed to fetch filtered runs');
                 }
             } catch (error) {
                 console.error('Error fetching runs:', error);
             }
-        },        
+        },
+
+        getRunLengthQuery(selectedRunLength) {
+            const lengthMap = {
+                "all": undefined,
+                "< 2": { $lt: 2 },
+                "3-5": { $gte: 3, $lte: 5 },
+                "6-8": { $gte: 6, $lte: 8 },
+                "9-11": { $gte: 9, $lte: 11 },
+                "12-14": { $gte: 12, $lte: 14 },
+                "14+": { $gt: 14 }
+            };
+            return lengthMap[selectedRunLength];
+        },
+
+        setCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    this.currentLocation = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    };
+                }, error => {
+                    console.error('Error getting location:', error);
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        },
 
         showCreateRun() {
             this.showSection = 'createRun';
@@ -216,22 +223,44 @@ const app = createApp({
         addMarker(lngLat, type) {
             let color;
             if (type === 'start') {
-                this.startLocationCoordinates = [lngLat.lng, lngLat.lat];
-                color = 'cornflowerblue';
+                if (!this.startLocationCoordinates) {
+                    this.startLocationCoordinates = [lngLat.lng, lngLat.lat];
+                    color = 'cornflowerblue';
+                } else {
+                    console.log('Start location already set');
+                    return; // Exit early if start location is already set
+                }
             } else if (type === 'end') {
-                this.endLocationCoordinates = [lngLat.lng, lngLat.lat];
-                color = 'mediumseagreen';
-            } else { // type assumed to be 'stop'
+                if (!this.endLocationCoordinates) {
+                    this.endLocationCoordinates = [lngLat.lng, lngLat.lat];
+                    color = 'mediumseagreen';
+                } else {
+                    console.log('End location already set');
+                    return; // Exit early if end location is already set
+                }
+            } else {
                 this.stopsCoordinates.push([lngLat.lng, lngLat.lat]);
                 color = 'lightcoral';
             }
 
-
-            new mapboxgl.Marker({ color, draggable: true })
+            const marker = new mapboxgl.Marker({ color, draggable: true })
                 .setLngLat([lngLat.lng, lngLat.lat])
                 .addTo(this.map);
 
-            // Update the route after adding the marker
+            marker.on('dragend', () => {
+                if (type === 'start') {
+                    this.startLocationCoordinates = [marker.getLngLat().lng, marker.getLngLat().lat];
+                } else if (type === 'end') {
+                    this.endLocationCoordinates = [marker.getLngLat().lng, marker.getLngLat().lat];
+                } else {
+                    const index = this.stopsCoordinates.findIndex(coord => coord[0] === lngLat.lng && coord[1] === lngLat.lat);
+                    if (index !== -1) {
+                        this.stopsCoordinates[index] = [marker.getLngLat().lng, marker.getLngLat().lat];
+                    }
+                }
+                this.updateRoute();
+            });
+
             if (this.startLocationCoordinates && this.endLocationCoordinates) {
                 this.updateRoute();
             }
@@ -239,14 +268,13 @@ const app = createApp({
 
         updateRoute() {
             if (!this.startLocationCoordinates || !this.endLocationCoordinates) {
-                return; // We need at least a start and end to draw a route
+                return;
             }
             const waypoints = this.stopsCoordinates.map(coord => coord.join(',')).join(';');
 
             const coordinates = this.startLocationCoordinates.join(',') + ';' + (waypoints ? waypoints + ';' : '') + this.endLocationCoordinates.join(',');
             const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/walking/${coordinates}?geometries=geojson&steps=true&access_token=${mapboxAccessToken}`;
 
-            // Fetch the route from the Mapbox Directions API
             fetch(directionsUrl)
                 .then(response => response.json())
                 .then(data => {
@@ -272,19 +300,6 @@ const app = createApp({
             legend.className = 'mapboxgl-ctrl legend';
             this.map.addControl(new mapboxgl.NavigationControl());
             this.map.getContainer().appendChild(legend);
-        },
-
-        promptForDescription(lngLat, marker) {
-            const description = prompt("Enter a description for this stop:");
-            if (description !== null) {
-                this.runDetails.stops.push({
-                    longitude: lngLat.lng,
-                    latitude: lngLat.lat,
-                    description: description
-                });
-            } else {
-                marker.remove();
-            }
         },
 
         updateStopLocation(newCoords) {
@@ -397,19 +412,28 @@ const app = createApp({
         async submitRun() {
             try {
                 const runDetails = {
-                    ...this.runDetails,
-                    startLocationCoordinate: this.startLocationCoordinates,
-                    endLocationCoordinate: this.endLocationCoordinates,
-                    stopsCoordinate: this.stopsCoordinates,
+                    stopsCoordinate: this.stopsCoordinates.map(coord => ({
+                        latitude: coord[1],
+                        longitude: coord[0]
+                    })),
+                    startLocationCoordinate: {
+                        type: 'Point',
+                        coordinates: [this.startLocationCoordinates[0], this.startLocationCoordinates[1]] // longitude, latitude
+                    },
+                    endLocationCoordinate: {
+                        type: 'Point',
+                        coordinates: [this.endLocationCoordinates[0], this.endLocationCoordinates[1]] // longitude, latitude
+                    },
                     eventName: this.eventName,
                     date: this.eventDate,
                     startTime: this.startTime,
-                    runType: this.runType,
                     startLocation: this.startLocation,
                     endLocation: this.endLocation,
-                    runPace: this.runPace,
-                    totalTime: this.totalTime
-                };
+                    runType: this.runType.toLowerCase(),
+                    runPace: this.calculatePace(),
+                    length: this.runLengthMiles,
+                    totalTime: this.totalTime,
+                }; 
                 const response = await fetch('/api/runs/create', {
                     method: 'POST',
                     headers: {
@@ -417,18 +441,31 @@ const app = createApp({
                     },
                     body: JSON.stringify(runDetails),
                 });
+
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log(data)
                     alert('Run created successfully!');
-                    this.fetchRuns();
-                    document.getElementById('create-run-header').style.display = 'none'
-                    this.showSection = 'eventList';
                 } else {
+                    const errorData = await response.text();
+                    console.error('Failed to create run:', errorData);
                     alert('Failed to create run');
                 }
             } catch (error) {
-                console.error('Error creating event:', error);
+                console.error('Error creating run:', error);
             }
         },
+
+        calculatePace() {
+            if (!this.totalTime || !this.runLengthMiles) {
+                console.log('Missing data for pace calculation');
+                console.log("Total Time:", this.totalTime, "Run Length:", this.runLengthMiles);
+                return 0;
+            }
+            const pace = this.totalTime / this.runLengthMiles;  // Correct the variable name here
+            console.log('Calculated pace:', pace);
+            return pace;
+        },               
 
         async submitSignUp() {
             try {
@@ -512,14 +549,13 @@ const app = createApp({
             const response = await fetch(`/api/stats/user-stats/${this.userId}`);
             if (response.ok) {
                 const statsData = await response.json();
-                // Ensure statsData is not null and has the properties we expect
                 if (statsData && 'totalDistance' in statsData && 'totalTime' in statsData && 'runsCompleted' in statsData) {
                     this.stats.runningStats.distance = statsData.totalDistance;
+                    console.log(statsData.totalDistance)
                     this.stats.runningStats.time = statsData.totalTime;
                     this.stats.runningStats.runs = statsData.runsCompleted;
                     this.stats.runningStats.pace = this.calculateAveragePace(statsData);
                     this.stats.runningStats.experienceLevel = this.calculateExperienceLevel(statsData);
-                    this.paceChartData = this.prepareChartData(statsData.paceData || []); // Provide a fallback in case paceData is undefined
                 } else {
                     // Handle the case where statsData doesn't have the information we need
                     console.error('User stats data is missing required properties.');
@@ -550,27 +586,26 @@ const app = createApp({
             const totalDistance = statsData.totalDistance;
 
             if (totalDistance < 50) {
+                this.userExperienceLevel = 'Beginner';
                 return 'Beginner';
             } else if (totalDistance >= 50 && totalDistance < 150) {
+                this.userExperienceLevel = 'Intermediate';
                 return 'Intermediate';
             } else if (totalDistance >= 150 && totalDistance < 400) {
+                this.userExperienceLevel = 'Advanced';
                 return 'Advanced';
             } else if (totalDistance >= 400) {
+                this.userExperienceLevel = 'Expert';
                 return 'Expert';
             } else {
+                this.userExperienceLevel = 'Beginner';
                 return 'Beginner'
             }
         },
 
-        prepareChartData(paceData) {
-            return {
-                labels: paceData.map(entry => new Date(entry.date).toLocaleDateString()),
-                datasets: [{
-                    label: 'Pace over Time',
-                    backgroundColor: '#f87979',
-                    data: paceData.map(entry => entry.pace)
-                }]
-            };
+        isLevelUnlocked(levelName) {
+            const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+            return levels.indexOf(levelName) <= levels.indexOf(this.userExperienceLevel);
         }
     },
     computed: {
@@ -588,10 +623,24 @@ const app = createApp({
                         completedDetails: userCompletion,
                     };
                 });
-        }
-    }
-})
+        },
 
-app.component('pace-chart', PaceChart);
+        isBeginnerUnlocked() {
+            return this.isLevelUnlocked('Beginner');
+        },
+
+        isIntermediateUnlocked() {
+            return this.isLevelUnlocked('Intermediate');
+        },
+
+        isAdvancedUnlocked() {
+            return this.isLevelUnlocked('Advanced');
+        },
+
+        isExpertUnlocked() {
+            return this.isLevelUnlocked('Expert');
+        },
+    },
+})
 
 app.mount('#app');

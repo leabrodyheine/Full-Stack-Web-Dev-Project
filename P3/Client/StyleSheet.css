@@ -117,6 +117,11 @@ h2 {
     height: auto;
 }
 
+.card-body {
+    font-size: 13px;
+    
+}
+
 .run-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -143,30 +148,40 @@ h2 {
 }
 
 .run-card button:hover {
-    background-color: #7085d1;
+    background-color: #6b7fc9;
 }
 
 /* Filter Styling */
-.select-filter {
-    display: block;
-    text-align: left;
-    padding-left: 40px;
-    width: 20%;
-    margin: 1.5rem auto;
+.filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
     padding: 0.5rem 1rem;
-    font-size: 1rem;
-    line-height: 1.5;
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    border-bottom: 1px solid #dee2e6;
+    gap: 0.5rem;
 }
 
-.select-filter:focus {
-    border-color: #80bdff;
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.filter-item {
+    display: flex;
+    align-items: center;
 }
+
+.filter-item select,
+.filter-item input {
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    height: 38px;
+}
+
+.filter-item label {
+    padding-right: 10px;
+    font-size: 15px;
+}
+
 
 
 .back-to-runs-button {
@@ -333,6 +348,81 @@ select:focus {
     text-decoration: none;
     cursor: pointer;
 }
+
+/* Stats Profile Styling */
+.stats-profile {
+    background-color: #ffffff;
+    /* Light background to stand out from the page */
+    border-radius: 8px;
+    /* Rounded corners for modern look */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Soft shadow for depth */
+    padding: 20px;
+    /* Spacing inside the container */
+    margin: 20px auto;
+    /* Center the container with some margin */
+    max-width: 600px;
+    /* Max width for readability */
+}
+
+.stats-profile p {
+    font-size: 1.1rem;
+    /* Slightly larger font for readability */
+    line-height: 1.6;
+    /* Space out lines for clarity */
+    color: #555;
+    /* Slightly darker font color for contrast */
+    margin-bottom: 10px;
+    /* Space between paragraphs */
+    display: flex;
+    /* Use flex to align icons with text */
+    align-items: center;
+    /* Align items vertically */
+}
+
+.stats-profile p::before {
+    content: '•';
+    /* Bullet point before each stat */
+    color: #0056b3;
+    /* Theme color for the bullet */
+    font-size: 1.5rem;
+    /* Larger size for the bullet */
+    margin-right: 10px;
+    /* Space between bullet and text */
+}
+
+.badges-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #ddd;
+    /* Default greyed out background */
+    color: #fff;
+    /* Text color */
+    transition: background-color 0.3s;
+}
+
+.badge.unlocked {
+    background-color: #4caf50;
+    /* Green background for unlocked badges */
+}
+
+.badge i {
+    font-size: 24px;
+    /* Icon size, adjust as needed */
+}
+
+
+
 
 .footer {
     background: #333;

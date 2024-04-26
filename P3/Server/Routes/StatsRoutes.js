@@ -27,15 +27,14 @@ router.get('/user-stats/:userId', async (req, res) => {
       });
     });
 
-    const averagePace = totalTime / totalDistance;
-
-    res.json({
+    const statsData = {
       totalDistance,
       totalTime,
-      averagePace,
       runsCompleted: runs.length,
       paceData
-    });
+    };
+
+    res.json(statsData);
 
   } catch (error) {
     console.error('Error fetching user stats:', error);

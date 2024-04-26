@@ -3,7 +3,6 @@ const connectDB = require('./DB');
 const expressBasicAuth = require('express-basic-auth')
 const app = express();
 const path = require('path');
-const geocodeRoutes = require('../Server/GeoCoding.js'); // Update the path
 
 // Connect to database
 connectDB();

@@ -20,7 +20,9 @@
     "gpx-parse": "^0.5.0",
     "mongoose": "^8.3.0",
     "node": "^18.20.1",
-    "vue-chartjs": "^5.3.0"
+    "vue": "^2.7.16",
+    "vue-chartjs": "^5.3.0",
+    "vuejs-datepicker": "^1.6.2"
   },
   "devDependencies": {
     "@vue/cli-service": "^3.3.1",

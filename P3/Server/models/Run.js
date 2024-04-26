@@ -7,12 +7,18 @@ const RunSchema = new mongoose.Schema({
     description: String
   }],
   startLocationCoordinate: {
-    type: { latitude: Number, longitude: Number },
-    required: true
+    type: { type: String, enum: ['Point'], required: true },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true
+    }
   },
   endLocationCoordinate: {
-    type: { latitude: Number, longitude: Number },
-    required: true
+    type: { type: String, enum: ['Point'], required: true },
+    coordinates: {
+      type: [Number], // [longitude, latitude]
+      required: true
+    }
   },
   signUps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Renamed for consistency
   length: Number, // miles
@@ -21,7 +27,7 @@ const RunSchema = new mongoose.Schema({
   startTime: { type: String, required: true },
   startLocation: { type: String, required: true },
   endLocation: { type: String, required: true },
-  pace: Number, //average mile pace
+  runPace: Number, //average mile pace
   runType: {
     type: String,
     enum: ['loop', 'out and back', 'point to point'],
@@ -36,5 +42,7 @@ const RunSchema = new mongoose.Schema({
   }],
   experienceLevel: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'], required: true }
 });
+
+RunSchema.index({ 'startLocationCoordinate.coordinates': '2dsphere' });
 
 module.exports = mongoose.model('Run', RunSchema);

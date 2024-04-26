@@ -17,6 +17,7 @@
     <link rel="stylesheet"
         href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.3.1/mapbox-gl-directions.css"
         type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
     <link rel="stylesheet" href="/StyleSheet.css">
     <title>CS 5003 P3</title>
@@ -68,17 +69,56 @@
         <!-- Event List -->
         <div v-if="showSection === 'eventList' && !showProfile" class="event-grid">
             <h2>Event List</h2>
-            <!-- File: index.html -->
-            <select v-model="selectedExperienceLevel" @change="fetchFilteredRuns" class="select-filter">
-                <option value="" disabled selected>Select Experience Level</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Expert">Expert</option>
-            </select>
+            <div class="filter-bar">
+                <div class="filter-item">
+                    <select id="experienceLevel" v-model="selectedExperienceLevel" @change="fetchFilteredRuns"
+                        class="select-filter">
+                        <option value="all">All Experience Levels</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Expert">Expert</option>
+                    </select>
+                </div>
 
-            <!-- <input type="text" v-model="selectedLocation" @input="fetchFilteredRuns" class="select-filter" placeholder="Enter location"> -->
+                <div class="filter-item">
+                    <label for="maxDistance">Max Distance:</label>
+                    <input id="maxDistance" type="number" v-model="maxDistance" class="input-filter"
+                        placeholder="Max distance (meters)" />
+                </div>
 
+                <div class="filter-item">
+                    <select id="runLength" v-model="selectedRunLength" @change="fetchFilteredRuns"
+                        class="select-filter">
+                        <option value="all">All Run Lengths</option>
+                        <option value="< 2">
+                            < 2 miles</option>
+                        <option value="3-5">3-5 miles</option>
+                        <option value="6-8">6-8 miles</option>
+                        <option value="9-11">9-11 miles</option>
+                        <option value="12-14">12-14 miles</option>
+                        <option value="14+">14+ miles</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <select id="runTime" v-model="selectedRunTime" @change="fetchFilteredRuns" class="select-filter">
+                        <option value="all">All run times</option>
+                        <option value="< 30 mins">30 mins</option>
+                        <option value="30-45 mins">30-45 mins</option>
+                        <option value="46-60 mins">46-60 mins</option>
+                        <option value="1-1.5 hr">1-1.5 hr</option>
+                        <option value="1.5-2 hr">1.5-2 hr</option>
+                        <option value="2-3 hr">2-3 hr</option>
+                        <option value="3+ hr">3+ hr</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="selectedDate">Select Date:</label>
+                    <input type="date" id="selectedDate" v-model="selectedDate" @input="fetchFilteredRuns"
+                        class="input-filter">
+                </div>
+            </div>
             <div class="grid-container">
                 <div v-for="(run, index) in runs" :key="run._id" class="run-card" style="width: 17rem;">
                     <img :src="imagePaths[index % imagePaths.length]" class="card-img-top" alt="Run Image">
@@ -87,9 +127,11 @@
                         <p class="card-text">Date: {{ new Date(run.date).toLocaleDateString() }}</p>
                         <p class="card-text">Start Time: {{ run.startTime }}</p>
                         <p class="card-text">Start Location: {{ run.startLocation }}</p>
-                        <p class="card-text">End Location: {{ run.endLocation }}</p>
-                        <p class="card-text">Length: {{ run.length }}</p>
-                        <p class="card-text">Pace: {{ run.runPace }} per mile</p>
+                        <p class="card-text">Length: {{ run.length }} miles</p>
+                        <p class="card-text">Total Time: {{ run.totalTime }} mins</p>
+                        <p class="card-text">Pace: {{ run.runPace }} mins/mile</p>
+                        <p class="card-text">Number of Stops: {{ run.stopsCoordinate.length }}</p>
+                        <p class="card-text">Experience Level: {{ run.experienceLevel }}</p>
                         <p class="card-text">Type: {{ run.runType }}</p>
                         <button @click="openSignUpModal(run)" class="btn btn-primary">Sign Up</button>
                     </div>
@@ -148,15 +190,16 @@
                     <!-- Run Length in Miles -->
                     <div class="mb-3">
                         <label for="run-length" class="form-label">Miles</label>
-                        <input type="number" class="form-control" id="run-length" v-model="length" placeholder="e.g., 3"
-                            required>
+                        <input type="number" class="form-control" id="run-length" v-model="runLengthMiles"
+                            placeholder="e.g., 3" required>
                     </div>
 
-                    <!-- Pace -->
+
+                    <!-- Total Time (estimated or actual time in minutes or your preferred unit) -->
                     <div class="mb-3">
-                        <label for="run-pace" class="form-label">Average Mins Per Mile</label>
-                        <input type="number" class="form-control" id="run-pace" v-model="pace" placeholder="e.g., 3"
-                            required>
+                        <label for="total-time" class="form-label">Total Time</label>
+                        <input type="number" class="form-control" id="total-time" v-model="totalTime"
+                            placeholder="e.g., 45" required>
                     </div>
 
                     <!-- Run Type -->
@@ -245,13 +288,33 @@
             </div>
 
             <div v-if="currentTab === 'Stats'">
-                <!-- Display user stats -->
-                <p>Total Miles Ran: {{ stats.runningStats.distance }}</p>
-                <p>Total Time Ran: {{ stats.runningStats.time }} minutes</p>
-                <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
-                <p>Average pace: {{ stats.runningStats.pace}}
-                <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
-                <!-- ... other stats elements ... -->
+                <div class="stats-profile">
+                    <p>Total Miles Ran: {{ stats.runningStats.distance }}</p>
+                    <p>Total Time Ran: {{ stats.runningStats.time }} minutes</p>
+                    <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
+                    <p>Average pace: {{ stats.runningStats.pace}}
+                    <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
+                    <!-- ... other stats elements ... -->
+                </div>
+                <div class="badges-container">
+                    <h3>Your Running Level</h3>
+                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Beginner') }">
+                        <i class="fas fa-walking"></i>
+                        <span>Beginner</span>
+                    </div>
+                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Intermediate') }">
+                        <i class="fas fa-running"></i>
+                        <span>Intermediate</span>
+                    </div>
+                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Advanced') }">
+                        <i class="fas fa-skiing-nordic"></i>
+                        <span>Advanced</span>
+                    </div>
+                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Expert') }">
+                        <i class="fas fa-mountain"></i>
+                        <span>Expert</span>
+                    </div>
+                </div>
             </div>
         </template>
 
@@ -305,15 +368,11 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Include Vue -->
     <script src="https://unpkg.com/vue@next"></script>
-    <!-- Include Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
     <!-- BootstrapVue script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-vue@3.0.0-beta.5/dist/bootstrap-vue.min.js"></script>
     <!-- Your main JavaScript file -->
     <script type="module" src="Main.js"></script>
-    <script src="./charts/PaceChart.js"></script>
 </body>
 
 </html>
