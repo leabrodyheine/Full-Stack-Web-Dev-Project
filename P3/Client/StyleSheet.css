@@ -10,7 +10,6 @@
 }
 
 /* Main Styling */
-/* Basic reset to minimize browser inconsistencies */
 * {
     margin: 0;
     padding: 0;
@@ -53,19 +52,16 @@ h2 {
     position: sticky;
     top: 0;
     z-index: 1020;
-    /* Bootstrap z-index for sticky */
 }
 
 .nav-tabs {
     background-color: #566f8b;
     border-bottom: 2px solid #333;
     margin-bottom: 0;
-    /* Removes the gap under nav */
 }
 
 .nav-item {
     margin-bottom: -1px;
-    /* Aligns tabs with border */
 }
 
 .nav-link {
@@ -119,7 +115,7 @@ h2 {
 
 .card-body {
     font-size: 13px;
-    
+
 }
 
 .run-card:hover {
@@ -181,7 +177,6 @@ h2 {
     padding-right: 10px;
     font-size: 15px;
 }
-
 
 
 .back-to-runs-button {
@@ -352,43 +347,27 @@ select:focus {
 /* Stats Profile Styling */
 .stats-profile {
     background-color: #ffffff;
-    /* Light background to stand out from the page */
     border-radius: 8px;
-    /* Rounded corners for modern look */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    /* Soft shadow for depth */
     padding: 20px;
-    /* Spacing inside the container */
     margin: 20px auto;
-    /* Center the container with some margin */
     max-width: 600px;
-    /* Max width for readability */
 }
 
 .stats-profile p {
     font-size: 1.1rem;
-    /* Slightly larger font for readability */
     line-height: 1.6;
-    /* Space out lines for clarity */
     color: #555;
-    /* Slightly darker font color for contrast */
     margin-bottom: 10px;
-    /* Space between paragraphs */
     display: flex;
-    /* Use flex to align icons with text */
     align-items: center;
-    /* Align items vertically */
 }
 
 .stats-profile p::before {
     content: '•';
-    /* Bullet point before each stat */
     color: #0056b3;
-    /* Theme color for the bullet */
     font-size: 1.5rem;
-    /* Larger size for the bullet */
     margin-right: 10px;
-    /* Space between bullet and text */
 }
 
 .badges-container {
@@ -405,24 +384,40 @@ select:focus {
     padding: 10px;
     border-radius: 5px;
     background-color: #ddd;
-    /* Default greyed out background */
     color: #fff;
-    /* Text color */
     transition: background-color 0.3s;
 }
 
 .badge.unlocked {
-    background-color: #4caf50;
-    /* Green background for unlocked badges */
+    background-color: #599b5b;
 }
 
 .badge i {
     font-size: 24px;
-    /* Icon size, adjust as needed */
 }
 
+.stats-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
 
+.stats-profile-container,
+.chart-container {
+    flex: 1;
+    padding: 40px;
+}
 
+.chart-container {
+    padding: 20px;
+    padding-bottom: 50px;
+    min-width: 400px;
+}
+
+#paceChart {
+    width: 90%;
+    height: 100%;
+}
 
 .footer {
     background: #333;

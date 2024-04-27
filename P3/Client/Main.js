@@ -2,6 +2,9 @@ import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
 
 const mapboxAccessToken = 'pk.eyJ1IjoibGJoNSIsImEiOiJjbHU1bzBtc3IwdHljMmlueGc2aWQwamIxIn0.KFx5qzUkJz9ubiQ41wxYpg'
 
+/**
+ * Initializes the main Vue application with data and methods related to running events.
+ */
 const app = createApp({
 
     data() {
@@ -10,7 +13,6 @@ const app = createApp({
             showSection: 'login',
             showSignUpModal: false,
             selectedRun: null,
-            signUpUsername: '',
             username: '',
             password: '',
             eventName: '',
@@ -33,7 +35,6 @@ const app = createApp({
             stopsCoordinates: [],
             selectedExperienceLevel: 'all',
             userExperienceLevel: '',
-            currentLocation: null,
             maxDistance: 5000,
             selectedRunLength: 'all',
             selectedRunTime: 'all',
@@ -86,6 +87,10 @@ const app = createApp({
     },
 
     methods: {
+        // Fetch Methods
+        /**
+         * Fetches all runs from the server and populates the runs data array.
+         */
         async fetchRuns() {
             try {
                 const response = await fetch('/api/runs/allRuns');
@@ -93,7 +98,7 @@ const app = createApp({
                     let runsData = await response.json();
                     runsData = runsData.map(run => ({
                         ...run,
-                        imagePath: this.getRunImage(), // Assign a persistent image 
+                        imagePath: this.getRunImage(),
                         isUserSignedUp: run.signUps.includes(this.userId),
                     }));
                     this.runs = runsData;
@@ -105,6 +110,9 @@ const app = createApp({
             }
         },
 
+        /**
+        * Fetches filtered runs based on user-selected criteria.
+        */
         async fetchFilteredRuns() {
             const runLengthQuery = this.getRunLengthQuery(this.selectedRunLength);
             try {
@@ -115,7 +123,6 @@ const app = createApp({
                     },
                     body: JSON.stringify({
                         experienceLevel: this.selectedExperienceLevel === 'all' ? '' : this.selectedExperienceLevel,
-                        location: this.currentLocation,
                         maxDistance: this.maxDistance,
                         length: this.selectedRunLength === 'all' ? '' : runLengthQuery,
                         runTime: this.selectedRunTime === 'all' ? '' : this.selectedRunTime,
@@ -132,86 +139,30 @@ const app = createApp({
             }
         },
 
-        getRunLengthQuery(selectedRunLength) {
-            const lengthMap = {
-                "all": undefined,
-                "< 2": { $lt: 2 },
-                "3-5": { $gte: 3, $lte: 5 },
-                "6-8": { $gte: 6, $lte: 8 },
-                "9-11": { $gte: 9, $lte: 11 },
-                "12-14": { $gte: 12, $lte: 14 },
-                "14+": { $gt: 14 }
-            };
-            return lengthMap[selectedRunLength];
-        },
-
-        setCurrentLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    this.currentLocation = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    };
-                }, error => {
-                    console.error('Error getting location:', error);
-                });
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        },
-
-        sortRuns(event) {
-            const sortBy = event.target.value;
-            switch (sortBy) {
-                case 'sortByDate':
-                    console.log("sorting by date")
-                    this.sortByDate();
-                    break;
-                case 'sortByLength':
-                    console.log("sorting by length")
-                    this.sortByLength();
-                    break;
-                case 'sortByDifficulty':
-                    console.log("sorting by difficulty")
-
-                    this.sortByDifficulty();
-                    break;
-                default:
-                    this.sortByDate();
-                    break;
-            }
-        },
-    
-        sortByDate() {
-            this.runs.sort((a, b) => new Date(a.date) - new Date(b.date));
-        },
-    
-        sortByLength() {
-            this.runs.sort((a, b) => a.length - b.length);
-        },
-    
-        sortByDifficulty() {
-            const difficultyMap = {
-                'Beginner': 1,
-                'Intermediate': 2,
-                'Advanced': 3,
-                'Expert': 4
-            };
-            this.runs.sort((a, b) => difficultyMap[a.experienceLevel] - difficultyMap[b.experienceLevel]);
-        },
-
-        showCreateRun() {
-            this.showSection = 'createRun';
-            document.getElementById('create-run-header').style.display = 'block'
-            this.$nextTick(() => {
-                if (!this.map && document.getElementById('map')) {
-                    this.initializeMap();
+        /**
+         * Fetches runs signed up by the current user.
+         */
+        async fetchSignedUpRuns() {
+            try {
+                const response = await fetch(`/api/runs/signed-up/${this.userId}`);
+                if (response.ok) {
+                    const signedUpRuns = await response.json();
+                    this.runs.forEach(run => {
+                        run.isUserSignedUp = signedUpRuns.some(signedUpRun => signedUpRun._id === run._id);
+                    });
                 } else {
-                    console.error('Map container not found or map already initialized');
+                    console.error('Failed to fetch signed-up runs');
                 }
-            });
+            } catch (error) {
+                console.error('Error fetching signed-up runs:', error);
+            }
         },
 
+
+        // Map and Location Methods
+        /**
+         * Initializes the map for creating and viewing runs.
+         */
         initializeMap() {
             if (!document.getElementById('map')) {
                 console.error('Map container is not available.');
@@ -260,6 +211,11 @@ const app = createApp({
             })
         },
 
+        /**
+         * Adds a marker to the map based on user interaction, allowing for start, end, and intermediate points.
+         * @param {Object} lngLat - Longitude and latitude of the clicked location on the map.
+         * @param {String} type - The type of marker to add ('start', 'end', 'stop').
+         */
         addMarker(lngLat, type) {
             let color;
             if (type === 'start') {
@@ -268,7 +224,7 @@ const app = createApp({
                     color = 'cornflowerblue';
                 } else {
                     console.log('Start location already set');
-                    return; // Exit early if start location is already set
+                    return;
                 }
             } else if (type === 'end') {
                 if (!this.endLocationCoordinates) {
@@ -276,7 +232,7 @@ const app = createApp({
                     color = 'mediumseagreen';
                 } else {
                     console.log('End location already set');
-                    return; // Exit early if end location is already set
+                    return;
                 }
             } else {
                 this.stopsCoordinates.push([lngLat.lng, lngLat.lat]);
@@ -306,6 +262,9 @@ const app = createApp({
             }
         },
 
+        /**
+         * Updates the displayed route on the map based on start, end, and stop coordinates.
+         */
         updateRoute() {
             if (!this.startLocationCoordinates || !this.endLocationCoordinates) {
                 return;
@@ -330,7 +289,9 @@ const app = createApp({
                 });
         },
 
-
+        /**
+         * Adds a legend to the map to identify different markers (start, end, stops).
+         */
         addMapLegend() {
             const legend = document.createElement('div');
             legend.innerHTML = `<h4>Legend</h4>
@@ -352,23 +313,11 @@ const app = createApp({
             this.runDetails.endLocation = lngLat;
         },
 
-        async fetchSignedUpRuns() {
-            try {
-                const response = await fetch(`/api/runs/signed-up/${this.userId}`);
-                if (response.ok) {
-                    const signedUpRuns = await response.json();
-                    this.runs.forEach(run => {
-                        run.isUserSignedUp = signedUpRuns.some(signedUpRun => signedUpRun._id === run._id);
-                    });
-                } else {
-                    console.error('Failed to fetch signed-up runs');
-                }
-            } catch (error) {
-                console.error('Error fetching signed-up runs:', error);
-            }
-        },
 
-
+        // Authentication and User Management
+        /**
+         * Logs in the user by sending credentials to the server and updating application state on success.
+         */
         async login() {
             try {
                 const response = await fetch('/api/users/login', {
@@ -396,6 +345,9 @@ const app = createApp({
             }
         },
 
+        /**
+         * Registers a new user by sending their credentials to the server and handling the application state.
+         */
         async register() {
             try {
                 const response = await fetch('/api/users/register', {
@@ -423,32 +375,80 @@ const app = createApp({
             }
         },
 
-        openSignUpModal(run) {
-            this.selectedRun = run;
-            this.showSignUpModal = true;
-        },
+        //Sorting/Filtering
+        /**
+         * Sorts the displayed runs based on user-selected criteria (date, length, or difficulty).
+         * @param {Event} event - The event object containing the selected sorting criterion.
+         */
+        sortRuns(event) {
+            const sortBy = event.target.value;
+            switch (sortBy) {
+                case 'sortByDate':
+                    console.log("sorting by date")
+                    this.sortByDate();
+                    break;
+                case 'sortByLength':
+                    console.log("sorting by length")
+                    this.sortByLength();
+                    break;
+                case 'sortByDifficulty':
+                    console.log("sorting by difficulty")
 
-        closeSignUpModal() {
-            this.showSignUpModal = false;
-        },
-
-        toggleProfile() {
-            this.showProfile = !this.showProfile;
-            this.showSection = this.showProfile ? '' : 'eventList';
-            if (this.showProfile) {
-                this.currentTab = 'Signed Up Runs';
+                    this.sortByDifficulty();
+                    break;
+                default:
+                    this.sortByDate();
+                    break;
             }
         },
 
-        closeSignUpModal() {
-            this.showSignUpModal = false;
+        /**
+         * Sorts the runs array by date, from earliest to latest.
+         */
+        sortByDate() {
+            this.runs.sort((a, b) => new Date(a.date) - new Date(b.date));
         },
 
-        backToRuns() {
-            this.showProfile = false;
-            this.showSection = 'eventList';
+        /**
+         * Sorts the runs array by length in ascending order.
+         */
+        sortByLength() {
+            this.runs.sort((a, b) => a.length - b.length);
         },
 
+        /**
+         * Sorts the runs array by difficulty based on a predefined difficulty mapping.
+         */
+        sortByDifficulty() {
+            const difficultyMap = {
+                'Beginner': 1,
+                'Intermediate': 2,
+                'Advanced': 3,
+                'Expert': 4
+            };
+            this.runs.sort((a, b) => difficultyMap[a.experienceLevel] - difficultyMap[b.experienceLevel]);
+        },
+
+
+        //Create Run
+        /**
+        * Displays the form for creating a new run and initializes the map if it hasn't been already.
+        */
+        showCreateRun() {
+            this.showSection = 'createRun';
+            document.getElementById('create-run-header').style.display = 'block'
+            this.$nextTick(() => {
+                if (!this.map && document.getElementById('map')) {
+                    this.initializeMap();
+                } else {
+                    console.error('Map container not found or map already initialized');
+                }
+            });
+        },
+
+        /**
+         * Submits a new run creation request to the server with the details from the run creation form.
+         */
         async submitRun() {
             try {
                 const runDetails = {
@@ -458,11 +458,11 @@ const app = createApp({
                     })),
                     startLocationCoordinate: {
                         type: 'Point',
-                        coordinates: [this.startLocationCoordinates[0], this.startLocationCoordinates[1]] // longitude, latitude
+                        coordinates: [this.startLocationCoordinates[0], this.startLocationCoordinates[1]]
                     },
                     endLocationCoordinate: {
                         type: 'Point',
-                        coordinates: [this.endLocationCoordinates[0], this.endLocationCoordinates[1]] // longitude, latitude
+                        coordinates: [this.endLocationCoordinates[0], this.endLocationCoordinates[1]]
                     },
                     eventName: this.eventName,
                     date: this.eventDate,
@@ -496,17 +496,11 @@ const app = createApp({
             }
         },
 
-        calculatePace() {
-            if (!this.totalTime || !this.runLengthMiles) {
-                console.log('Missing data for pace calculation');
-                console.log("Total Time:", this.totalTime, "Run Length:", this.runLengthMiles);
-                return 0;
-            }
-            const pace = this.totalTime / this.runLengthMiles;  // Correct the variable name here
-            console.log('Calculated pace:', pace);
-            return pace;
-        },
 
+        //Interacting with runs
+        /**
+         * Submits a request to sign up the current user for the selected run.
+         */
         async submitSignUp() {
             try {
                 const response = await fetch(`/api/runs/signup/${this.selectedRun._id}`, {
@@ -529,11 +523,9 @@ const app = createApp({
             }
         },
 
-        getRunImage() {
-            const index = Math.floor(Math.random() * this.imagePaths.length);
-            return this.imagePaths[index];
-        },
-
+        /**
+         * Submits completion details for a run and updates the run's status for the user.
+         */
         async markRunAsCompleted() {
             console.log("Submitting run completion details:", {
                 userId: this.userId,
@@ -555,11 +547,10 @@ const app = createApp({
                     }),
                 });
                 if (response.ok) {
-                    // Immediately reflect changes in UI without refetching
                     const updatedRun = await response.json();
                     const runIndex = this.runs.findIndex(run => run._id === this.selectedRunForCompletion._id);
                     if (runIndex !== -1) {
-                        this.runs.splice(runIndex, 1, updatedRun); // Replace the run with its updated version
+                        this.runs.splice(runIndex, 1, updatedRun);
                     }
                     this.showCompletionModal = false;
                 } else {
@@ -568,6 +559,133 @@ const app = createApp({
             } catch (error) {
                 console.error('Error marking run as completed:', error);
             }
+        },
+
+
+        //User Statistics
+        /**
+         * Fetches and updates the current user's statistics from the server.
+         */
+        async fetchUserStats() {
+            if (!this.userId) {
+                console.error("User ID is not set.");
+                return;
+            }
+            try {
+                const response = await fetch(`/api/stats/user-stats/${this.userId}`);
+                if (response.ok) {
+                    const statsData = await response.json();
+                    if (statsData && 'totalDistance' in statsData && 'totalTime' in statsData && 'runsCompleted' in statsData) {
+                        this.stats.runningStats.distance = statsData.totalDistance;
+                        this.stats.runningStats.time = statsData.totalTime;
+                        this.stats.runningStats.runs = statsData.runsCompleted;
+                        this.stats.runningStats.pace = this.calculateAveragePace(statsData);
+                        this.stats.runningStats.experienceLevel = this.calculateExperienceLevel(statsData);
+                        this.stats.runningStats.paceData = statsData.paceData || [];
+                    } else {
+                        console.error('Failed to fetch user stats');
+                        throw new Error('Failed to fetch stats');
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching user stats:', error);
+                throw error;
+            }
+        },
+
+        /**
+         * Initializes a pace chart for the current user based on their completed runs.
+         */
+        initializePaceChart() {
+            const canvas = document.getElementById('paceChart');
+            if (canvas && canvas.getContext) {
+                const ctx = canvas.getContext('2d');
+                const sortedPaceData = this.stats.runningStats.paceData
+                    .map(data => ({
+                        x: new Date(data.date),
+                        y: data.pace
+                    }))
+                    .sort((a, b) => a.x - b.x);
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Pace over Time',
+                            data: sortedPaceData,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'day',
+                                    tooltipFormat: 'MMM D YYYY'
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Pace (mins per mile)'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error('Canvas element not found for pace chart');
+            }
+        },
+
+
+        // Utility and Helper Methods
+        getRunImage() {
+            const index = Math.floor(Math.random() * this.imagePaths.length);
+            return this.imagePaths[index];
+        },
+
+        /**
+         * Generates a MongoDB query object based on the selected run length filter.
+         * @param {String} selectedRunLength - The length category selected by the user.
+         * @returns {Object} A MongoDB query object tailored to the specified run length filter.
+         */
+        getRunLengthQuery(selectedRunLength) {
+            const lengthMap = {
+                "all": undefined,
+                "< 2": { $lt: 2 },
+                "3-5": { $gte: 3, $lte: 5 },
+                "6-8": { $gte: 6, $lte: 8 },
+                "9-11": { $gte: 9, $lte: 11 },
+                "12-14": { $gte: 12, $lte: 14 },
+                "14+": { $gt: 14 }
+            };
+            return lengthMap[selectedRunLength];
+        },
+
+        /**
+         * Calculates the pace of the run based on total time and run length.
+         * If essential data is missing, logs an error and returns 0.
+         * @returns {Number} The calculated pace of the run (minutes per mile) or 0 if data is insufficient.
+         */
+        calculatePace() {
+            if (!this.totalTime || !this.runLengthMiles) {
+                console.log('Missing data for pace calculation');
+                console.log("Total Time:", this.totalTime, "Run Length:", this.runLengthMiles);
+                return 0;
+            }
+            const pace = this.totalTime / this.runLengthMiles;
+            console.log('Calculated pace:', pace);
+            return pace;
         },
 
         openCompletionModal(run) {
@@ -581,31 +699,36 @@ const app = createApp({
             this.showCompletionModal = true;
         },
 
-        async fetchUserStats() {
-            if (!this.userId) {
-                console.error("User ID is not set.");
-                return;
-            }
-            const response = await fetch(`/api/stats/user-stats/${this.userId}`);
-            if (response.ok) {
-                const statsData = await response.json();
-                if (statsData && 'totalDistance' in statsData && 'totalTime' in statsData && 'runsCompleted' in statsData) {
-                    this.stats.runningStats.distance = statsData.totalDistance;
-                    console.log(statsData.totalDistance)
-                    this.stats.runningStats.time = statsData.totalTime;
-                    this.stats.runningStats.runs = statsData.runsCompleted;
-                    this.stats.runningStats.pace = this.calculateAveragePace(statsData);
-                    this.stats.runningStats.experienceLevel = this.calculateExperienceLevel(statsData);
-                } else {
-                    // Handle the case where statsData doesn't have the information we need
-                    console.error('User stats data is missing required properties.');
-                }
-            } else {
-                console.error('Failed to fetch user stats');
+        openSignUpModal(run) {
+            this.selectedRun = run;
+            this.showSignUpModal = true;
+        },
+
+        closeSignUpModal() {
+            this.showSignUpModal = false;
+        },
+
+        toggleProfile() {
+            this.showProfile = !this.showProfile;
+            this.showSection = this.showProfile ? '' : 'eventList';
+            if (this.showProfile) {
+                this.currentTab = 'Signed Up Runs';
             }
         },
 
+        closeSignUpModal() {
+            this.showSignUpModal = false;
+        },
 
+        backToRuns() {
+            this.showProfile = false;
+            this.showSection = 'eventList';
+        },
+
+        /**
+         * Computes the average pace from completed runs for statistical display.
+         * @returns {String} The average pace formatted to two decimal places.
+         */
         calculateAveragePace(statsData) {
             if (!statsData.paceData || statsData.paceData.length === 0) {
                 return 0;
@@ -622,6 +745,10 @@ const app = createApp({
             return (totalPace / count).toFixed(2);
         },
 
+        /**
+         * Calculates the user's experience level based on the total distance they have run.
+         * @returns {String} The calculated experience level.
+         */
         calculateExperienceLevel(statsData) {
             const totalDistance = statsData.totalDistance;
 
@@ -643,6 +770,11 @@ const app = createApp({
             }
         },
 
+        /**
+         * Determines if a specific user experience level is unlocked based on the total distance run.
+         * @param {String} levelName - The name of the level to check.
+         * @returns {Boolean} True if the level is unlocked; otherwise, false.
+         */
         isLevelUnlocked(levelName) {
             const levels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
             return levels.indexOf(levelName) <= levels.indexOf(this.userExperienceLevel);
@@ -680,6 +812,17 @@ const app = createApp({
         isExpertUnlocked() {
             return this.isLevelUnlocked('Expert');
         },
+    },
+    watch: {
+        currentTab(newVal) {
+            if (newVal === 'Stats') {
+                this.fetchUserStats().then(() => {
+                    this.$nextTick(() => {
+                        this.initializePaceChart();
+                    });
+                });
+            }
+        }
     },
 })
 

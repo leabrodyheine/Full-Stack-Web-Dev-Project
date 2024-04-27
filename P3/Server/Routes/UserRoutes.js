@@ -4,18 +4,18 @@ const User = require('../models/Users.js');
 const bcrypt = require('bcrypt');
 const expressBasicAuth = require('express-basic-auth');
 
-// Custom authorizer function for express-basic-auth
+/**
+ * Custom authorizer function for express-basic-auth.
+ * Compares provided credentials with those stored in the database.
+ */
 const customAuthorizer = async (username, password, cb) => {
     try {
         const user = await User.findOne({ username });
-
         if (!user) {
             // User not found
             return cb(null, false);
         }
-
         const passwordMatch = await bcrypt.compare(password, user.password);
-
         if (passwordMatch) {
             // Passwords match
             return cb(null, true);
@@ -28,23 +28,28 @@ const customAuthorizer = async (username, password, cb) => {
     }
 };
 
-// Basic Authentication middleware setup
+
+/**
+ * Middleware setup for HTTP basic authentication.
+ */
 const basicAuthMiddleware = expressBasicAuth({
     authorizer: customAuthorizer,
     authorizeAsync: true,
     unauthorizedResponse: () => 'Unauthorized'
 });
 
-// Login route using express-basic-auth
+
+
+/**
+ * Route for user login. Validates user credentials and responds accordingly.
+ */
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         const user = await User.findOne({ username });
-
         if (!user) {
             return res.status(401).send('Login failed'); // User not found
         }
-
         if (password === user.password) {
             res.status(200).json({ msg: `Welcome, ${username}!`, userId: user._id });
         } else {
@@ -57,30 +62,32 @@ router.post('/login', async (req, res) => {
 });
 
 
-// Register a new user
+
+/**
+ * Route for registering a new user.
+ * Checks for existing user and saves new user to the database.
+ */
 router.post('/register', async (req, res) => {
     const { username, password } = req.body;
-
     // Check if the user already exists
     let user = await User.findOne({ username });
     if (user) {
         return res.status(400).json({ msg: 'User already exists' });
     }
-
     // Create and store the new user
     user = new User({
         username,
         password
     });
-
     await user.save();
-
     res.status(200).json({ msg: `Welcome, ${username}!`, userId: user._id });
 });
 
 
 
-// GET api/users - Get all users
+/**
+ * GET route to retrieve all users.
+ */
 router.get('/', async (req, res) => {
     try {
         const users = await User.find();
@@ -92,7 +99,9 @@ router.get('/', async (req, res) => {
 });
 
 
-// GET api/users/:id - Get a single user by ID
+/**
+ * GET route to retrieve a single user by ID.
+ */
 router.get('/:id', async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -100,7 +109,6 @@ router.get('/:id', async (req, res) => {
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
-
         res.json(user);
     } catch (err) {
         console.error(err.message);
@@ -108,43 +116,24 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// PUT api/users/:id - Update a user by ID
+
+
+/**
+ * PUT route to update a user by ID.
+ */
 router.put('/:id', async (req, res) => {
     try {
-        const { username, password } = req.body; // Include any other user fields you want to update
-
-        // Construct user update object
-        const userUpdate = { username, password }; // Hash password if changed, handle this in your User model
-
+        const { username, password } = req.body;
+        const userUpdate = { username, password };
         // Find the user by ID and update
         let user = await User.findByIdAndUpdate(req.params.id, userUpdate, { new: true });
-
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
-
         res.json(user);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Error Updating User');
-    }
-});
-
-
-// DELETE api/users/:id - Delete a user by ID
-router.delete('/:id', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-
-        if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
-        }
-
-        await user.remove();
-        res.json({ msg: 'User removed' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Error Deleting User');
     }
 });
 

@@ -4,16 +4,26 @@ const Run = require('../models/Run');
 const mongoose = require('mongoose');
 
 
-// Helper function to compute experience level based on run data
+/**
+ * Computes the experience level based on distance and total time.
+ * @param {number} distance - The total distance of the run.
+ * @param {number} totalTime - The total time taken for the run.
+ * @returns {string} The experience level.
+ */
 function computeExperienceLevel(distance, totalTime) {
-  const speed = distance / (totalTime / 60); // Speed in km/h
+  const speed = distance / (totalTime / 60);
   if (speed > 7.5) return 'Expert';
   else if (speed > 6) return 'Advanced';
   else if (speed > 4.5) return 'Intermediate';
   else return 'Beginner';
 }
 
-// GET endpoint to fetch all runs
+
+/**
+ * GET endpoint to fetch all runs.
+ * @route GET /allRuns
+ * @returns {Object[]} An array of run objects.
+ */
 router.get('/allRuns', async (req, res) => {
   try {
     const runs = await Run.find();
@@ -24,7 +34,13 @@ router.get('/allRuns', async (req, res) => {
   }
 })
 
-// POST endpoint for creating a new run with automatic experience level calculation
+
+/**
+ * POST endpoint for creating a new run.
+ * @route POST /create
+ * @param {Object} req.body - Run details from request body.
+ * @returns {Object} The created run object.
+ */
 router.post('/create', async (req, res) => {
   const {
     stopsCoordinate, startLocationCoordinate, endLocationCoordinate,
@@ -46,7 +62,7 @@ router.post('/create', async (req, res) => {
       startLocation,
       endLocation,
       runPace,
-      runType: runType.toLowerCase(), // Ensure runType is correctly formatted
+      runType: runType.toLowerCase(),
       experienceLevel
     });
 
@@ -60,7 +76,13 @@ router.post('/create', async (req, res) => {
 });
 
 
-
+/**
+ * PUT endpoint to sign up a user for a run.
+ * @route PUT /signup/:runId
+ * @param {string} req.params.runId - The run ID from URL parameter.
+ * @param {string} req.body.userId - The user ID from request body.
+ * @returns {Object} The updated run object.
+ */
 router.put('/signup/:runId', async (req, res) => {
   try {
     const { runId } = req.params;
@@ -84,7 +106,14 @@ router.put('/signup/:runId', async (req, res) => {
   }
 });
 
-// Fetch runs signed up by a specific user
+
+
+/**
+ * GET endpoint to fetch runs signed up by a specific user.
+ * @route GET /signed-up/:userId
+ * @param {string} req.params.userId - The user ID from URL parameter.
+ * @returns {Object[]} An array of run objects that the user has signed up for.
+ */
 router.get('/signed-up/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -102,6 +131,14 @@ router.get('/signed-up/:userId', async (req, res) => {
   }
 });
 
+
+/**
+ * POST endpoint to complete a run by a user.
+ * @route POST /complete/:runId
+ * @param {string} req.params.runId - The run ID from URL parameter.
+ * @param {Object} req.body - Completion details from request body.
+ * @returns {Object} The updated run object with completion details.
+ */
 router.post('/complete/:runId', async (req, res) => {
   console.log("Received data:", req.body);
   const { runId } = req.params;
@@ -127,15 +164,59 @@ router.post('/complete/:runId', async (req, res) => {
 });
 
 
+/**
+ * Constructs a MongoDB query for the run time based on the provided criteria.
+ * @param {string} runTime - The expected total time range for the run.
+ * @returns {Object} MongoDB query object for totalTime.
+ */
+const buildTimeQuery = (runTime) => {
+  const timeCriteria = {
+    '< 30 mins': { $lt: 30 },
+    '30-45 mins': { $gte: 30, $lte: 45 },
+    '46-60 mins': { $gte: 46, $lte: 60 },
+    '1-1.5 hr': { $gte: 60, $lte: 90 },
+    '1.5-2 hr': { $gte: 91, $lte: 120 },
+    '2-3 hr': { $gte: 121, $lte: 180 },
+    '3+ hr': { $gte: 181 }
+  };
+  return timeCriteria[runTime] || {};
+};
+
+
+/**
+ * Constructs a MongoDB query for the date range.
+ * @param {string} dateString - The selected date in string format.
+ * @returns {Object} MongoDB query object for date.
+ */
+const buildDateQuery = (dateString) => {
+  if (!dateString) return {};
+
+  const selectedDate = new Date(dateString);
+  const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 1);
+
+  return { $gte: startDate, $lt: endDate };
+};
+
+
+/**
+ * Route to fetch filtered runs based on various criteria.
+ * @route POST /filtered
+ * @param {Object} req.body - Object containing filter criteria.
+ * @returns {Object[]} An array of run objects that match the filters.
+ */
 router.post('/filtered', async (req, res) => {
   try {
     const { experienceLevel, location, maxDistance, length, runTime, date } = req.body;
     let query = {};
 
+    // Build query based on the experience level provided
     if (experienceLevel && experienceLevel !== '') {
       query.experienceLevel = experienceLevel;
     }
 
+    // Build query based on the location and maxDistance provided
     if (location && maxDistance) {
       query.startLocationCoordinate = {
         $near: {
@@ -148,43 +229,19 @@ router.post('/filtered', async (req, res) => {
       };
     }
 
+    // Build query based on the length provided
     if (length && length !== '') {
       query.length = length;
     }
 
+    // Build query based on the run time provided
     if (runTime && runTime !== '') {
-      switch (runTime) {
-        case '< 30 mins':
-          query.totalTime = { $lt: 30 };
-          break;
-        case '30-45 mins':
-          query.totalTime = { $gte: 30, $lte: 45 };
-          break;
-        case '46-60 mins':
-          query.totalTime = { $gte: 46, $lte: 60 };
-          break;
-        case '1-1.5 hr':
-          query.totalTime = { $gte: 60, $lte: 90 };
-          break;
-        case '1.5-2 hr':
-          query.totalTime = { $gte: 91, $lte: 120 };
-          break;
-        case '2-3 hr':
-          query.totalTime = { $gte: 121, $lte: 180 };
-          break;
-        case '3+ hr':
-          query.totalTime = { $gte: 181 };
-          break;
-        default:
-          break;
-      }
+      query.totalTime = buildTimeQuery(runTime);
     }
 
+    // Build query based on the date provided
     if (date) {
-      const selectedDate = new Date(date);
-      const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-      const endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1);
-      query.date = { $gte: startDate, $lt: endDate };
+      query.date = buildDateQuery(date);
     }
 
     const runs = await Run.find(query);
@@ -194,6 +251,5 @@ router.post('/filtered', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
 
 module.exports = router;

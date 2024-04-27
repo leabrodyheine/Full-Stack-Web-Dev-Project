@@ -203,7 +203,7 @@
                     </div>
 
 
-                    <!-- Total Time (estimated or actual time in minutes or your preferred unit) -->
+                    <!-- Total Time -->
                     <div class="mb-3">
                         <label for="total-time" class="form-label">Total Time</label>
                         <input type="number" class="form-control" id="total-time" v-model="totalTime"
@@ -228,7 +228,7 @@
             </div>
         </div>
 
-        <!-- profile -->
+        <!-- Profile -->
         <template v-if="showProfile">
             <div style="margin-bottom: 20px;">
                 <button @click="backToRuns" class="back-to-runs-button">&#x2190; Back to Runs</button>
@@ -295,33 +295,37 @@
                 </div>
             </div>
 
-            <div v-if="currentTab === 'Stats'">
-                <div class="stats-profile">
-                    <p>Total Miles Ran: {{ stats.runningStats.distance }}</p>
-                    <p>Total Time Ran: {{ stats.runningStats.time }} minutes</p>
-                    <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
-                    <p>Average pace: {{ stats.runningStats.pace}}
-                    <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
-                    <!-- ... other stats elements ... -->
+            <div v-if="currentTab === 'Stats'" class="stats-container">
+                <div class="stats-profile-container">
+                    <div class="stats-profile">
+                        <p>Total Miles Ran: {{ stats.runningStats.distance }}</p>
+                        <p>Total Time Ran: {{ stats.runningStats.time }} minutes</p>
+                        <p>Total Number of Runs: {{ stats.runningStats.runs }}</p>
+                        <p>Average pace: {{ stats.runningStats.pace }} mins/mile</p>
+                        <p>Experience Level: {{ calculateExperienceLevel(stats.runningStats.distance) }}</p>
+                    </div>
+                    <div class="badges-container">
+                        <h3>Your Running Level</h3>
+                        <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Beginner') }">
+                            <i class="fas fa-walking"></i>
+                            <span>Beginner</span>
+                        </div>
+                        <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Intermediate') }">
+                            <i class="fas fa-running"></i>
+                            <span>Intermediate</span>
+                        </div>
+                        <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Advanced') }">
+                            <i class="fas fa-skiing-nordic"></i>
+                            <span>Advanced</span>
+                        </div>
+                        <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Expert') }">
+                            <i class="fas fa-mountain"></i>
+                            <span>Expert</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="badges-container">
-                    <h3>Your Running Level</h3>
-                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Beginner') }">
-                        <i class="fas fa-walking"></i>
-                        <span>Beginner</span>
-                    </div>
-                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Intermediate') }">
-                        <i class="fas fa-running"></i>
-                        <span>Intermediate</span>
-                    </div>
-                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Advanced') }">
-                        <i class="fas fa-skiing-nordic"></i>
-                        <span>Advanced</span>
-                    </div>
-                    <div class="badge" :class="{ 'unlocked': isLevelUnlocked('Expert') }">
-                        <i class="fas fa-mountain"></i>
-                        <span>Expert</span>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="paceChart"></canvas>
                 </div>
             </div>
         </template>
@@ -376,7 +380,6 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Include Vue -->
     <script src="https://unpkg.com/vue@next"></script>
-
     <!-- BootstrapVue script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-vue@3.0.0-beta.5/dist/bootstrap-vue.min.js"></script>
     <!-- Your main JavaScript file -->
