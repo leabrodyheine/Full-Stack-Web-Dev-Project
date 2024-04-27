@@ -284,39 +284,47 @@ const runs = [
 ];
 
 
-
-const users = [
-  { username: "Lucy", password: "hi" }
-];
-
-const stats = [
-  {
-    userId: null,  // Will be set after the user is created
-    totalDistance: 50,
-    totalTime: 250,
-    runs: 6,
-    paceData: [
-      { date: new Date('2024-06-01'), pace: 8.5 },
-      { date: new Date('2024-06-15'), pace: 9.0 },
-      { date: new Date('2024-06-30'), pace: 8.7 }
-    ]
-  }
-];
-
 async function initializeDatabase() {
   try {
-    // Insert runs
-    const insertedRuns = await Run.insertMany(runs);
-    console.log(`${insertedRuns.length} new runs added successfully.`);
+    const newUser = new User({ username: "Amy", password: "hi" });
+    const savedUser = await newUser.save();
+    console.log('New user added successfully.');
 
-    // Insert user and use its ID for stats
-    const insertedUsers = await User.insertMany(users);
-    console.log(`${insertedUsers.length} new user(s) added successfully.`);
+    const runsToComplete = runs.slice(0, 3); 
+    const completionDates = [
+      new Date('2024-06-16'),  
+      new Date('2024-07-02'),
+      new Date('2024-07-06')
+    ];
 
-    // Update stats with userId from the newly inserted user
-    stats[0].userId = insertedUsers[0]._id;
-    const insertedStats = await Stats.insertMany(stats);
-    console.log(`${insertedStats.length} new stats record(s) added successfully.`);
+    runsToComplete.forEach((run, index) => {
+      run.completedBy.push({
+        userId: savedUser._id,
+        distance: run.length,
+        time: run.totalTime,
+        date: completionDates[index] 
+      });
+    });
+    const insertedRuns = await Run.insertMany(runsToComplete);
+    console.log(`${insertedRuns.length} new runs added successfully with completion records.`);
+
+    const totalDistance = runsToComplete.reduce((acc, run) => acc + run.length, 0);
+    const totalTime = runsToComplete.reduce((acc, run) => acc + run.totalTime, 0);
+
+    const stats = {
+      userId: savedUser._id,
+      totalDistance: totalDistance,
+      totalTime: totalTime,
+      runs: runsToComplete.length,
+      paceData: runsToComplete.map((run, index) => ({
+        date: completionDates[index],
+        pace: run.totalTime / run.length
+      }))
+    };
+    const newStats = new Stats(stats);
+    const savedStats = await newStats.save();
+    console.log('Stats added successfully:', savedStats);
+
   } catch (error) {
     console.error('Error initializing database:', error);
   } finally {

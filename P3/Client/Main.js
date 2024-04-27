@@ -335,7 +335,7 @@ const app = createApp({
                     this.userId = userData.userId;
                     await this.fetchRuns();
                     await this.fetchSignedUpRuns();
-                    this.fetchUserStats();
+                    // this.fetchUserStats();
                     this.showSection = 'eventList';
                 } else {
                     alert('Login failed!');
@@ -365,7 +365,7 @@ const app = createApp({
                     this.userId = userData.userId;
                     await this.fetchRuns();
                     await this.fetchSignedUpRuns();
-                    this.fetchUserStats();
+                    // this.fetchUserStats();
                     this.showSection = 'eventList';
                 } else {
                     alert('Registration failed!');
@@ -575,6 +575,7 @@ const app = createApp({
                 const response = await fetch(`/api/stats/user-stats/${this.userId}`);
                 if (response.ok) {
                     const statsData = await response.json();
+                    console.log(statsData)
                     if (statsData && 'totalDistance' in statsData && 'totalTime' in statsData && 'runsCompleted' in statsData) {
                         this.stats.runningStats.distance = statsData.totalDistance;
                         this.stats.runningStats.time = statsData.totalTime;
@@ -582,6 +583,7 @@ const app = createApp({
                         this.stats.runningStats.pace = this.calculateAveragePace(statsData);
                         this.stats.runningStats.experienceLevel = this.calculateExperienceLevel(statsData);
                         this.stats.runningStats.paceData = statsData.paceData || [];
+                        // this.initializePaceChart()
                     } else {
                         console.error('Failed to fetch user stats');
                         throw new Error('Failed to fetch stats');
@@ -625,7 +627,7 @@ const app = createApp({
                                 type: 'time',
                                 time: {
                                     unit: 'day',
-                                    tooltipFormat: 'MMM D YYYY'
+                                    tooltipFormat: 'MMM d yyyy'  // Updated format here
                                 },
                                 title: {
                                     display: true,

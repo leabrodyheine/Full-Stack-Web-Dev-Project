@@ -46,6 +46,7 @@ router.get('/user-stats/:userId', async (req, res) => {
   try {
     const runs = await Run.find({ 'completedBy.userId': objectIdUserId });
     const statsData = calculateUserStats(runs, userId);
+    console.log(statsData); // Check if dates are present here
     res.json(statsData);
   } catch (error) {
     console.error('Error fetching user stats:', error);
