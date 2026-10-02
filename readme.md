@@ -1,35 +1,39 @@
 # Social Runners Platform
 
-## Overview
-The Social Runners Platform is designed to manage and track runs for a community 
-of runners. This system allows users to sign up for runs, track their completion, 
-and view statistics about their runs.
+A completed full-stack coursework project for organizing community runs. Users can create an account, browse and filter scheduled runs, register for an event, record a completed run, and view running statistics. The browser client is served by an Express API backed by MongoDB.
 
 ## Features
-- **User Management**: Users can sign up and log into the platform.
-- **Run Scheduling**: can schedule new runs with specific routes and times.
-- **Run Completion Tracking**: Users can mark runs as completed and record their times and distances.
-- **Statistics**: The platform provides detailed statistics on users' performance over time.
 
-## Technologies Used
-- **MongoDB**: For storing user data, run schedules, and statistics.
-- **Node.js**: Server-side logic, including user authentication and data processing.
-- **Mongoose**: MongoDB object modeling for Node.js.
-- **Express**: Web framework for Node.js.
+- Account registration and login
+- Run creation with route, date, distance, pace, and experience level
+- Event filtering, sorting, registration, and completion tracking
+- User statistics and charts
+- Map-based route creation
 
-## Setup and Installation
+## Technology
 
-### Prerequisites
-- Node.js
-- MongoDB
-- Chart.js
+Vue 2 · Node.js · Express · MongoDB/Mongoose · Chart.js · Mapbox GL JS
 
-### Installation Steps
-- will need to install all the necessary libraries and frameworks
-- navigate into the server directory
-- run node DBScript.js in the terminal to populate the database with data initally 
-- to start the server run node Server.js
-- go to http://localhost:5030/ and log in with the following credentials:
-    username: Amy
-    password; hi
-- explore! 
+## Run locally
+
+Prerequisites: Node.js 18 and a local MongoDB server.
+
+```bash
+npm install
+node P3/Server/DBScript.js
+node P3/Server/Server.js
+```
+
+Open <http://localhost:5030>. The seed script populates the `socialRunnersPlatform` database with sample users, runs, and statistics. The application also uses browser-loaded Mapbox resources, so map features require an internet connection.
+
+## Structure
+
+- `P3/Client/` contains the Vue client, styles, and static assets.
+- `P3/Server/Server.js` serves the client and mounts the REST API.
+- `P3/Server/Routes/` contains user, run, and statistics endpoints.
+- `P3/Server/models/` contains the Mongoose schemas.
+- `P3/Server/DBScript.js` loads the sample dataset.
+
+## Project status
+
+This is a completed academic project preserved as a portfolio example. It is not a hosted production service.
